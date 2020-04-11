@@ -1,26 +1,31 @@
-APU_ADDR   = $4000
-APU_WA1    = $4000
-APU_WA2    = $4004
-APU_TRI    = $4008
-APU_NOI    = $400C
-APU_DMC    = $4010
-APU_STATUS = $4015
-APU_FRAME  = $4017
-OAM_DMA    = $4014
-PPUCONTROL = $2000
-PPUMASK    = $2001
-PPUSTATUS  = $2002
-PPUADDR    = $2006
-PPUDATA    = $2007
+PPUCONTROL   = $2000
+PPUMASK      = $2001
+PPUSTATUS    = $2002
+PPUADDR      = $2006
+PPUDATA      = $2007
+APU_ADDR     = $4000
+APU_WA1      = $4000
+APU_WA2      = $4004
+APU_TRI      = $4008
+APU_NOI      = $400C
+APU_DMC      = $4010
+APU_STATUS   = $4015
+APU_FRAME    = $4017
+INPUT_CTRL_1 = $4016
+INPUT_CTRL_2 = $4017
+OAM_DMA      = $4014
+
+beep         = $0004
+P1_COOR_X    = $0200
+P1_COOR_Y    = $0201
+P2_COOR_X    = $0202
+P2_COOR_Y    = $0203
+
+INPUT        = $0300
+oamaddr      = $0700
+
 
 BLOCK_SPRITE_BG = $24
-
-INPUT_1 = $4016
-INPUT_2 = $4017
-
-beep = $04
-
-oamaddr = $0700
 
 .segment "CODE"
 nmi:
@@ -52,9 +57,29 @@ textdone:
 	sta PPUADDR
 
 	; ppu critical phase finished
+	jsr doProcessInput
 	jsr doTriggerAudio
 
 	rti
+
+doProcessInput:
+	lda #$00
+	sta INPUT
+
+	lda #$01
+	sta INPUT_CTRL_1
+	lda #$00
+	sta INPUT_CTRL_1
+
+	ldx #$08
+@nextInput:
+	lda INPUT_CTRL_1
+	lsr a
+	rol INPUT
+	dex
+	bne @nextInput
+
+	rts
 
 doTriggerAudio:
 	lda beep
