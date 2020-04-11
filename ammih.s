@@ -23,10 +23,15 @@ P2_COOR_Y    = $0203
 
 INPUT        = $0300
 PRESSED      = $0301
+BULK_UPDATE  = $0302
+ACTIVE_STAGE = $0303
 OAMADDR      = $0700
 
 
 BLOCK_SPRITE_BG = $24
+BLOCK_SPRITE_F1 = $26
+BLOCK_SPRITE_F2 = $27
+BLOCK_SPRITE_F3 = $28
 
 .segment "CODE"
 nmi:
@@ -62,7 +67,44 @@ textdone:
 	jsr doTriggerAudio
 	jsr updatePlayerSprites
 
+	lda ACTIVE_STAGE
+	bne @stageIsAlreadyLoaded
+	; deactivate nmi
+	lda #%00100000
+	sta PPUCONTROL
+	jsr doLoadStage
+	lda #%10100000
+	sta PPUCONTROL
+@stageIsAlreadyLoaded:
+
 	rti
+
+doLoadStage:
+	inc ACTIVE_STAGE
+;map1:
+	ldy map1
+	ldx #$0
+@nextField:
+	lda map1,x
+	inx
+	lda map1,x
+	inx
+	dey
+	bne @nextField
+
+	inx
+	lda map1,x
+	sta P1_COOR_Y
+	inx
+	lda map1,x
+	sta P1_COOR_X
+	inx
+	lda map1,x
+	sta P2_COOR_Y
+	inx
+	lda map1,x
+	sta P2_COOR_X
+	rts
 
 doProcessInput:
 	lda #$00
@@ -178,7 +220,6 @@ reset:
 	jsr initializePalette
 	jsr initializeAttributeTable
 	jsr initializeDmaTable
-	jsr initializePlayerPositions
 	jsr updatePlayerSprites
 
 	lda #1
@@ -196,6 +237,24 @@ msg:
 ; The string: "a match made in heaven"
 .byte $0a,$24,$16,$0a,$1d,$0c,$11,$24,$16,$0a,$0d,$0e,$24,$12,$17,$24,$11,$0e,$0a,$1f,$0e,$17,$00
 
+map1:
+; Encoded first map of the game, for testing purposes
+; First, the coordinates of the "walkable area"
+; How many, then y-x pairs
+.byte $07
+.byte $04, $05
+.byte $05, $05
+.byte $06, $05
+.byte $04, $08
+.byte $05, $08
+.byte $06, $08
+.byte $06, $09
+; Second, the start locations for the characters
+.byte $04, $05
+.byte $04, $08
+; Last, the exit locations
+.byte $06, $05
+.byte $06, $08
 
 updatePlayerSprites:
 	lda P1_COOR_Y
@@ -265,19 +324,6 @@ updatePlayerSprites:
 	sta OAMADDR+3+4+8
 	lda #$32
 	sta OAMADDR+1+4+8
-	rts
-
-; This should not be here, but it's fine for the moment
-initializePlayerPositions:
-	; lets put both players in logical row 4
-	lda #4
-	sta P1_COOR_Y
-	sta P2_COOR_Y
-	; lets put players sepparated by a player width
-	lda #6
-	sta P1_COOR_X
-	lda #8
-	sta P2_COOR_X
 	rts
 
 ; A nametable has 30 rows of 32 sprites each
