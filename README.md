@@ -1,4 +1,4 @@
-# A Match Made In Heaver
+# A Match Made In Heaven
 
 This is a basic puzzle-like NES game.
 
