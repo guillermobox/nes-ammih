@@ -21,6 +21,8 @@ PPU_BUF_HI   = $0006
 PPU_BUF_VAL  = $0007
 P1_COOR      = $0200
 P2_COOR      = $0201
+P1_NEXT_COOR = $0202
+P2_NEXT_COOR = $0203
 
 INPUT        = $0300
 PRESSED      = $0301
@@ -34,6 +36,12 @@ BLOCK_SPRITE_BG = $24
 BLOCK_SPRITE_F1 = $26
 BLOCK_SPRITE_F2 = $27
 BLOCK_SPRITE_F3 = $28
+
+DPAD_MASK       = DPAD_UP | DPAD_DOWN | DPAD_LEFT | DPAD_RIGHT
+DPAD_UP         = %00001000
+DPAD_DOWN       = %00000100
+DPAD_LEFT       = %00000010
+DPAD_RIGHT      = %00000001
 
 .segment "CODE"
 nmi:
@@ -82,7 +90,6 @@ textdone:
 	sta PPUADDR
 	lda #$00
 	sta PPUADDR
-
 @vblankwait:
 	bit PPUSTATUS
 	bpl @vblankwait
@@ -216,31 +223,108 @@ doProcessInput:
 	beq @moveCharacter
 	rts
 @moveCharacter:
-
-;	lda INPUT
-;	and #$02
-;	beq @skip1
-;	dec P1_COOR_X
-;@skip1:
-;	lda INPUT
-;	and #$01
-;	beq @skip2
-;	inc P1_COOR_X
-;@skip2:
-;	lda INPUT
-;	and #$04
-;	beq @skip3
-;	inc P1_COOR_Y
-;@skip3:
-;	lda INPUT
-;	and #$08
-;	beq @skip4
-;	dec P1_COOR_Y
-;@skip4:
-
+	jsr doMaybeMoveCharacters
 	lda #1
 	sta PRESSED
 @finishedInput:
+	rts
+
+doMaybeMoveCharacters:
+	; calculate destination coordinates
+	lda P1_COOR
+	sta P1_NEXT_COOR
+	lda P2_COOR
+	sta P2_NEXT_COOR
+
+	lda INPUT
+	and #DPAD_LEFT
+	beq @notleft
+	dec P1_NEXT_COOR
+	dec P2_NEXT_COOR
+	jmp @calculated
+@notleft:
+	lda INPUT
+	and #DPAD_RIGHT
+	beq @notright
+	inc P1_NEXT_COOR
+	inc P2_NEXT_COOR
+	jmp @calculated
+@notright:
+	lda INPUT
+	and #DPAD_UP
+	beq @notup
+
+	clc
+	lda P1_COOR
+	adc #$f0
+	and #$f0
+	sta 0
+	lda P1_COOR
+	and #$0f
+	ora 0
+	sta P1_NEXT_COOR
+
+	clc
+	lda P2_COOR
+	adc #$f0
+	and #$f0
+	sta 0
+	lda P2_COOR
+	and #$0f
+	ora 0
+	sta P2_NEXT_COOR
+
+	jmp @calculated
+@notup:
+	lda INPUT
+	and #DPAD_DOWN
+	beq @notdown
+
+	clc
+	lda P1_COOR
+	adc #$10
+	and #$f0
+	sta 0
+	lda P1_COOR
+	and #$0f
+	ora 0
+	sta P1_NEXT_COOR
+
+	clc
+	lda P2_COOR
+	adc #$10
+	and #$f0
+	sta 0
+	lda P2_COOR
+	and #$0f
+	ora 0
+	sta P2_NEXT_COOR
+
+	jmp @calculated
+@notdown:
+@calculated:
+	; now that I have the possible new coordinates,
+	; move the characters if they can
+
+	ldy map1
+	ldx #$00
+@nextBackgroundTile:
+	inx
+	lda map1,x
+	cmp P1_NEXT_COOR
+	bne @player1CannotMoveThere
+	lda P1_NEXT_COOR
+	sta P1_COOR
+	lda map1,x
+@player1CannotMoveThere:
+	cmp P2_NEXT_COOR
+	bne @player2CannotMoveThere
+	lda P2_NEXT_COOR
+	sta P2_COOR
+@player2CannotMoveThere:
+	dey
+	bne @nextBackgroundTile
+
 	rts
 
 doTriggerAudio:
@@ -339,6 +423,7 @@ map1:
 .byte $68
 
 updatePlayerSprites:
+	clc
 	lda P1_COOR
 	and #$f0
 	adc #$Fd
