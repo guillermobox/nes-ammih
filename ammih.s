@@ -19,10 +19,8 @@ beep         = $0004
 PPU_BUF_LO   = $0005
 PPU_BUF_HI   = $0006
 PPU_BUF_VAL  = $0007
-P1_COOR_X    = $0200
-P1_COOR_Y    = $0201
-P2_COOR_X    = $0202
-P2_COOR_Y    = $0203
+P1_COOR      = $0200
+P2_COOR      = $0201
 
 INPUT        = $0300
 PRESSED      = $0301
@@ -120,16 +118,10 @@ doLoadStage:
 
 	inx
 	lda map1,x
-	sta P1_COOR_Y
+	sta P1_COOR
 	inx
 	lda map1,x
-	sta P1_COOR_X
-	inx
-	lda map1,x
-	sta P2_COOR_Y
-	inx
-	lda map1,x
-	sta P2_COOR_X
+	sta P2_COOR
 
 	lda #BLOCK_SPRITE_F2
 	sta PPU_BUF_VAL
@@ -146,11 +138,19 @@ consumeMapCoordinates:
 	lda map1,x
 	lsr
 	lsr
+	lsr
+	lsr
+	lsr
+	lsr
 	ora #$20
 	sta PPU_BUF_HI
 
 ; for the x coordinate
 	lda map1,x
+	lsr
+	lsr
+	lsr
+	lsr
 	and #$03
 	asl
 	asl
@@ -159,8 +159,8 @@ consumeMapCoordinates:
 	asl
 	asl
 	sta 0
-	inx
 	lda map1,x
+	and #$0F
 	asl
 	ora 0
 	sta PPU_BUF_LO
@@ -217,26 +217,26 @@ doProcessInput:
 	rts
 @moveCharacter:
 
-	lda INPUT
-	and #$02
-	beq @skip1
-	dec P1_COOR_X
-@skip1:
-	lda INPUT
-	and #$01
-	beq @skip2
-	inc P1_COOR_X
-@skip2:
-	lda INPUT
-	and #$04
-	beq @skip3
-	inc P1_COOR_Y
-@skip3:
-	lda INPUT
-	and #$08
-	beq @skip4
-	dec P1_COOR_Y
-@skip4:
+;	lda INPUT
+;	and #$02
+;	beq @skip1
+;	dec P1_COOR_X
+;@skip1:
+;	lda INPUT
+;	and #$01
+;	beq @skip2
+;	inc P1_COOR_X
+;@skip2:
+;	lda INPUT
+;	and #$04
+;	beq @skip3
+;	inc P1_COOR_Y
+;@skip3:
+;	lda INPUT
+;	and #$08
+;	beq @skip4
+;	dec P1_COOR_Y
+;@skip4:
 
 	lda #1
 	sta PRESSED
@@ -322,31 +322,29 @@ msg:
 map1:
 ; Encoded first map of the game, for testing purposes
 ; First, the coordinates of the "walkable area"
-; How many, then y-x pairs
+; How many, then y and x compressed in a single byte
 .byte $07
-.byte $04, $05
-.byte $05, $05
-.byte $06, $05
-.byte $04, $08
-.byte $05, $08
-.byte $06, $08
-.byte $06, $09
+.byte $45
+.byte $55
+.byte $65
+.byte $48
+.byte $58
+.byte $68
+.byte $69
 ; Second, the start locations for the characters
-.byte $04, $05
-.byte $04, $08
+.byte $45
+.byte $48
 ; Last, the exit locations
-.byte $05, $05
-.byte $06, $08
+.byte $55
+.byte $68
 
 updatePlayerSprites:
-	lda P1_COOR_Y
-	asl
-	asl
-	asl
-	asl
+	lda P1_COOR
+	and #$f0
 	adc #$Fd
 	sta OAMADDR
-	lda P1_COOR_X
+	lda P1_COOR
+	and #$0F
 	asl
 	asl
 	asl
@@ -355,14 +353,12 @@ updatePlayerSprites:
 	lda #$30
 	sta OAMADDR+1
 
-	lda P1_COOR_Y
-	asl
-	asl
-	asl
-	asl
+	lda P1_COOR
+	and #$f0
 	adc #$Fd
 	sta OAMADDR+4
-	lda P1_COOR_X
+	lda P1_COOR
+	and #$0F
 	asl
 	asl
 	asl
@@ -373,16 +369,14 @@ updatePlayerSprites:
 	lda #$32
 	sta OAMADDR+1+4
 
-	lda P2_COOR_Y
-	asl
-	asl
-	asl
-	asl
+	lda P2_COOR
+	and #$f0
 	adc #$FD
 	sta OAMADDR+8
 	lda #$01
 	sta OAMADDR+2+8
-	lda P2_COOR_X
+	lda P2_COOR
+	and #$0f
 	asl
 	asl
 	asl
@@ -391,16 +385,14 @@ updatePlayerSprites:
 	lda #$30
 	sta OAMADDR+1+8
 
-	lda P2_COOR_Y
-	asl
-	asl
-	asl
-	asl
+	lda P2_COOR
+	and #$f0
 	adc #$fd
 	sta OAMADDR+4+8
 	lda #$01
 	sta OAMADDR+4+2+8
-	lda P2_COOR_X
+	lda P2_COOR
+	and #$0f
 	asl
 	asl
 	asl
