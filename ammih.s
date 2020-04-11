@@ -16,6 +16,9 @@ INPUT_CTRL_2 = $4017
 OAM_DMA      = $4014
 
 beep         = $0004
+PPU_BUF_LO   = $0005
+PPU_BUF_HI   = $0006
+PPU_BUF_VAL  = $0007
 P1_COOR_X    = $0200
 P1_COOR_Y    = $0201
 P2_COOR_X    = $0202
@@ -25,6 +28,7 @@ INPUT        = $0300
 PRESSED      = $0301
 BULK_UPDATE  = $0302
 ACTIVE_STAGE = $0303
+
 OAMADDR      = $0700
 
 
@@ -35,8 +39,6 @@ BLOCK_SPRITE_F3 = $28
 
 .segment "CODE"
 nmi:
-	lda #$1e
-	sta PPUMASK
 
 	; write title of the game
 	lda #$20
@@ -69,26 +71,50 @@ textdone:
 
 	lda ACTIVE_STAGE
 	bne @stageIsAlreadyLoaded
-	; deactivate nmi
+	; disable rendering
+	ldx #0
+	stx PPUMASK
+	; disable nmi
 	lda #%00100000
 	sta PPUCONTROL
+	; load the stage
 	jsr doLoadStage
+	; wait for the next blank
+	lda #$20
+	sta PPUADDR
+	lda #$00
+	sta PPUADDR
+
+@vblankwait:
+	bit PPUSTATUS
+	bpl @vblankwait
+	; enable rendering
+	lda #$1e
+	sta PPUMASK
+	; enable nmi
 	lda #%10100000
 	sta PPUCONTROL
 @stageIsAlreadyLoaded:
+
+	lda #$20
+	sta PPUADDR
+	lda #$00
+	sta PPUADDR
 
 	rti
 
 doLoadStage:
 	inc ACTIVE_STAGE
-;map1:
+
 	ldy map1
 	ldx #$0
 @nextField:
-	lda map1,x
-	inx
-	lda map1,x
-	inx
+	jsr consumeMapCoordinates
+
+	lda #BLOCK_SPRITE_F1
+	sta PPU_BUF_VAL
+	jsr writeBackgroundBlock
+
 	dey
 	bne @nextField
 
@@ -104,6 +130,62 @@ doLoadStage:
 	inx
 	lda map1,x
 	sta P2_COOR_X
+
+	lda #BLOCK_SPRITE_F2
+	sta PPU_BUF_VAL
+	jsr consumeMapCoordinates
+	jsr writeBackgroundBlock
+	jsr consumeMapCoordinates
+	jsr writeBackgroundBlock
+
+	rts
+
+consumeMapCoordinates:
+; for the y coordinate
+	inx
+	lda map1,x
+	lsr
+	lsr
+	ora #$20
+	sta PPU_BUF_HI
+
+; for the x coordinate
+	lda map1,x
+	and #$03
+	asl
+	asl
+	asl
+	asl
+	asl
+	asl
+	sta 0
+	inx
+	lda map1,x
+	asl
+	ora 0
+	sta PPU_BUF_LO
+	rts
+
+writeBackgroundBlock:
+	lda PPU_BUF_HI
+	sta PPUADDR
+	lda PPU_BUF_LO
+	sta PPUADDR
+	lda PPU_BUF_VAL
+	sta PPUDATA
+	sta PPUDATA
+	clc
+	lda PPU_BUF_LO
+	adc #$20
+	lda #$00
+	adc PPU_BUF_HI
+	sta PPUADDR
+	lda PPU_BUF_LO
+	adc #$20
+	sta PPUADDR
+	lda PPU_BUF_VAL
+	sta PPUDATA
+	sta PPUDATA
 	rts
 
 doProcessInput:
@@ -253,7 +335,7 @@ map1:
 .byte $04, $05
 .byte $04, $08
 ; Last, the exit locations
-.byte $06, $05
+.byte $05, $05
 .byte $06, $08
 
 updatePlayerSprites:
@@ -262,6 +344,7 @@ updatePlayerSprites:
 	asl
 	asl
 	asl
+	adc #$Fd
 	sta OAMADDR
 	lda P1_COOR_X
 	asl
@@ -277,6 +360,7 @@ updatePlayerSprites:
 	asl
 	asl
 	asl
+	adc #$Fd
 	sta OAMADDR+4
 	lda P1_COOR_X
 	asl
@@ -294,6 +378,7 @@ updatePlayerSprites:
 	asl
 	asl
 	asl
+	adc #$FD
 	sta OAMADDR+8
 	lda #$01
 	sta OAMADDR+2+8
@@ -311,6 +396,7 @@ updatePlayerSprites:
 	asl
 	asl
 	asl
+	adc #$fd
 	sta OAMADDR+4+8
 	lda #$01
 	sta OAMADDR+4+2+8
@@ -421,11 +507,11 @@ initializePalette:
 defaultPalette:
 	; the background values for sprites
 	; have priority because of mirroring
-	.byte $21,$30,$3f,$3f ; background 0
+	.byte $21,$30,$27,$3f ; background 0
 	.byte $3f,$3f,$3f,$3f ; background 1
 	.byte $3f,$3f,$3f,$3f ; background 2
 	.byte $3f,$3f,$3f,$3f ; background 3
-	.byte $3f,$16,$37,$07 ; sprite 0
+	.byte $21,$16,$37,$07 ; sprite 0
 	.byte $3f,$19,$37,$07 ; sprite 1
 	.byte $3f,$3f,$3f,$3f ; sprite 2
 	.byte $3f,$3f,$3f,$3f ; sprite 3
