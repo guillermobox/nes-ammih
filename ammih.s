@@ -22,7 +22,8 @@ P2_COOR_X    = $0202
 P2_COOR_Y    = $0203
 
 INPUT        = $0300
-oamaddr      = $0700
+PRESSED      = $0301
+OAMADDR      = $0700
 
 
 BLOCK_SPRITE_BG = $24
@@ -48,7 +49,7 @@ nextletter:
 textdone:
 
 	; enqueue DMA transfer to OAM
-	lda #>oamaddr
+	lda #>OAMADDR
 	sta OAM_DMA
 
 	lda #$20
@@ -59,6 +60,7 @@ textdone:
 	; ppu critical phase finished
 	jsr doProcessInput
 	jsr doTriggerAudio
+	jsr updatePlayerSprites
 
 	rti
 
@@ -79,6 +81,42 @@ doProcessInput:
 	dex
 	bne @nextInput
 
+	lda INPUT
+	bne @newInput
+	lda #0
+	sta PRESSED
+	rts
+@newInput:
+
+	lda PRESSED
+	beq @moveCharacter
+	rts
+@moveCharacter:
+
+	lda INPUT
+	and #$02
+	beq @skip1
+	dec P1_COOR_X
+@skip1:
+	lda INPUT
+	and #$01
+	beq @skip2
+	inc P1_COOR_X
+@skip2:
+	lda INPUT
+	and #$04
+	beq @skip3
+	inc P1_COOR_Y
+@skip3:
+	lda INPUT
+	and #$08
+	beq @skip4
+	dec P1_COOR_Y
+@skip4:
+
+	lda #1
+	sta PRESSED
+@finishedInput:
 	rts
 
 doTriggerAudio:
@@ -140,6 +178,8 @@ reset:
 	jsr initializePalette
 	jsr initializeAttributeTable
 	jsr initializeDmaTable
+	jsr initializePlayerPositions
+	jsr updatePlayerSprites
 
 	lda #1
 	sta beep
@@ -156,6 +196,89 @@ msg:
 ; The string: "a match made in heaven"
 .byte $0a,$24,$16,$0a,$1d,$0c,$11,$24,$16,$0a,$0d,$0e,$24,$12,$17,$24,$11,$0e,$0a,$1f,$0e,$17,$00
 
+
+updatePlayerSprites:
+	lda P1_COOR_Y
+	asl
+	asl
+	asl
+	asl
+	sta OAMADDR
+	lda P1_COOR_X
+	asl
+	asl
+	asl
+	asl
+	sta OAMADDR+3
+	lda #$30
+	sta OAMADDR+1
+
+	lda P1_COOR_Y
+	asl
+	asl
+	asl
+	asl
+	sta OAMADDR+4
+	lda P1_COOR_X
+	asl
+	asl
+	asl
+	asl
+	clc
+	adc #8
+	sta OAMADDR+3+4
+	lda #$32
+	sta OAMADDR+1+4
+
+	lda P2_COOR_Y
+	asl
+	asl
+	asl
+	asl
+	sta OAMADDR+8
+	lda #$01
+	sta OAMADDR+2+8
+	lda P2_COOR_X
+	asl
+	asl
+	asl
+	asl
+	sta OAMADDR+3+8
+	lda #$30
+	sta OAMADDR+1+8
+
+	lda P2_COOR_Y
+	asl
+	asl
+	asl
+	asl
+	sta OAMADDR+4+8
+	lda #$01
+	sta OAMADDR+4+2+8
+	lda P2_COOR_X
+	asl
+	asl
+	asl
+	asl
+	clc
+	adc #8
+	sta OAMADDR+3+4+8
+	lda #$32
+	sta OAMADDR+1+4+8
+	rts
+
+; This should not be here, but it's fine for the moment
+initializePlayerPositions:
+	; lets put both players in logical row 4
+	lda #4
+	sta P1_COOR_Y
+	sta P2_COOR_Y
+	; lets put players sepparated by a player width
+	lda #6
+	sta P1_COOR_X
+	lda #8
+	sta P2_COOR_X
+	rts
 
 ; A nametable has 30 rows of 32 sprites each
 clearNametable:
@@ -209,15 +332,15 @@ initializeDmaTable:
 	ldx #0
 @next_sprite:
 	lda #0
-	sta oamaddr,x ; y position
+	sta OAMADDR,x ; y position
 	inx
 	lda #BLOCK_SPRITE_BG
-	sta oamaddr,x ; sprite index
+	sta OAMADDR,x ; sprite index
 	inx
 	lda #0
-	sta oamaddr,x ; palette
+	sta OAMADDR,x ; palette
 	inx
-	sta oamaddr,x ; x position
+	sta OAMADDR,x ; x position
 	inx
 	bne @next_sprite
 	rts
