@@ -658,8 +658,9 @@ congrats3:
 stagesLookUpTable:
 	.addr map1
 	.addr map2
+	.addr map3
 numberOfStages:
-	.byte $02
+	.byte $03
 
 map1:
 ; Encoded first map of the game, for testing purposes
@@ -690,6 +691,30 @@ map2:
 ; Second, the start locations for the characters
 .byte $45, $48
 .byte $55, $68
+map3:
+; Encoded third map that requires a little more thinking
+.byte $12
+.byte $44
+.byte $45
+.byte $46
+.byte $47
+.byte $54
+.byte $55
+.byte $56
+.byte $57
+.byte $65
+.byte $66
+.byte $67
+.byte $5a
+.byte $5b
+.byte $5c
+.byte $6a
+.byte $6b
+.byte $6c
+.byte $7a
+; Second, the start locations for the characters
+.byte $56, $7a
+.byte $56, $6c
 
 updatePlayerSprites:
 	clc
