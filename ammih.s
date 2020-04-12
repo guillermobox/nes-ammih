@@ -19,11 +19,13 @@ PPU_BUF_LO   = $0005
 PPU_BUF_HI   = $0006
 PPU_BUF_VAL  = $0007
 STAGE_ADDR   = $0009
+A_CHARACTER_MOVED = $0000
 
 P1_COOR      = $0200
 P2_COOR      = $0201
 P1_NEXT_COOR = $0202
 P2_NEXT_COOR = $0203
+STEPS_TAKEN  = $0204
 
 INPUT        = $0300
 PRESSED      = $0301
@@ -67,6 +69,7 @@ nmi:
 	jsr doTriggerAudio
 	jsr updatePlayerSprites
 	jsr updateGameState
+	jsr updateHUD
 
 	lda GAME_STATE
 	cmp #GameStateLoading
@@ -79,6 +82,8 @@ nmi:
 	sta PPUCONTROL
 	; load the stage
 	jsr doLoadStage
+	lda #$00
+	sta STEPS_TAKEN
 	; wait for the next blank
 	lda #$20
 	sta PPUADDR
@@ -164,6 +169,45 @@ doConsumePPUEncoded:
 	sta PPUADDR
 	sta PPU_ENCODED
 	sta PPU_ENCODED_LEN
+	rts
+
+updateHUD:
+	lda #$20
+	sta $00
+	lda #$8D
+	sta $01
+	lda STEPS_TAKEN
+	sta $02
+	jsr enqueueNumber
+	rts
+
+; consume the address from 00 (high) 01 (low) and the value from 02
+enqueueNumber:
+	ldx PPU_ENCODED_LEN
+	lda #$02
+	sta PPU_ENCODED,x
+	inx
+	lda $00
+	sta PPU_ENCODED,x
+	inx
+	lda $01
+	sta PPU_ENCODED,x
+	inx
+
+	lda $02
+	lsr
+	lsr
+	lsr
+	lsr
+	sta PPU_ENCODED,x
+	inx
+
+	lda $02
+	and #$0f
+	sta PPU_ENCODED,x
+	inx
+
+	stx PPU_ENCODED_LEN
 	rts
 
 updateGameState:
@@ -419,6 +463,7 @@ doMaybeMoveCharacters:
 	sta STAGE_ADDR+1
 
 	ldy #$00
+	sty A_CHARACTER_MOVED
 	lda (STAGE_ADDR),y
 	tax
 @nextBackgroundTile:
@@ -426,18 +471,36 @@ doMaybeMoveCharacters:
 	lda (STAGE_ADDR),y
 	cmp P1_NEXT_COOR
 	bne @player1CannotMoveThere
+	inc A_CHARACTER_MOVED
 	lda P1_NEXT_COOR
 	sta P1_COOR
 	lda (STAGE_ADDR),y
 @player1CannotMoveThere:
 	cmp P2_NEXT_COOR
 	bne @player2CannotMoveThere
+	inc A_CHARACTER_MOVED
 	lda P2_NEXT_COOR
 	sta P2_COOR
 @player2CannotMoveThere:
 	dex
 	bne @nextBackgroundTile
 
+	ldx A_CHARACTER_MOVED
+	beq @nobodymoved
+	; BCD increment the variable steps taken
+	inc STEPS_TAKEN
+	lda STEPS_TAKEN
+	and #$0f
+	cmp #$0a
+	bmi :+
+		inc STEPS_TAKEN
+		inc STEPS_TAKEN
+		inc STEPS_TAKEN
+		inc STEPS_TAKEN
+		inc STEPS_TAKEN
+		inc STEPS_TAKEN
+	:
+@nobodymoved:
 	rts
 
 doTriggerAudio:
