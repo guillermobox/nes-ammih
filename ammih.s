@@ -39,8 +39,9 @@ BLOCK_SPRITE_BG = $24
 BLOCK_SPRITE_F1 = $26
 BLOCK_SPRITE_F2 = $27
 BLOCK_SPRITE_F3 = $28
+
+GameStatePlaying = $01
 GameStateVictory = $02
-GameStateWaiting = $03
 
 DPAD_MASK       = DPAD_UP | DPAD_DOWN | DPAD_LEFT | DPAD_RIGHT
 DPAD_UP         = %00001000
@@ -151,6 +152,11 @@ doEnqueueTextMessage:
 	rts
 
 updateGameState:
+	lda GAME_STATE
+	cmp #GameStatePlaying
+	beq :+
+		rts
+	:
 	; if both characters are in exit cells, you win
 	ldx map1
 	inx
@@ -313,8 +319,8 @@ doProcessInput:
 @moveCharacter:
 	; we dispatch difference things depending on the game state
 	lda GAME_STATE
-	cmp #GameStateVictory
-	beq :+
+	cmp #GameStatePlaying
+	bne :+
 	jsr doMaybeMoveCharacters
 :
 	lda #1
@@ -479,6 +485,8 @@ reset:
 	sta $01
 	jsr doEnqueueTextMessage
 
+	lda #GameStatePlaying
+	sta GAME_STATE
 BusyLoop:
 	jmp BusyLoop
 
