@@ -342,7 +342,9 @@ doMaybeMenu:
 	lda INPUT
 	and #CTRL_START
 	beq @notstart
-	sta $04a0
+		; go to next stage then
+		lda #GameStateLoading
+		sta GAME_STATE
 @notstart:
 	rts
 
