@@ -45,6 +45,8 @@ BLOCK_SPRITE_F3 = $28
 GameStateLoading = $00
 GameStatePlaying = $01
 GameStateVictory = $02
+GameStateEndScreen = $03
+GameStateIdle = $04
 
 DPAD_MASK       = DPAD_UP | DPAD_DOWN | DPAD_LEFT | DPAD_RIGHT
 DPAD_UP         = %00001000
@@ -68,6 +70,7 @@ nmi:
 	jsr updateGameState
 
 	lda GAME_STATE
+	cmp #GameStateLoading
 	bne @stageIsAlreadyLoaded
 	; disable rendering
 	ldx #0
@@ -94,6 +97,35 @@ nmi:
 	lda #GameStatePlaying
 	sta GAME_STATE
 @stageIsAlreadyLoaded:
+
+	lda GAME_STATE
+	cmp #GameStateEndScreen
+	bne @notInEndScreen
+	; disable rendering
+	ldx #0
+	stx PPUMASK
+	; disable nmi
+	lda #%00100000
+	sta PPUCONTROL
+	; load the stage
+	jsr doShowEndScreen
+	lda #GameStateIdle
+	sta GAME_STATE
+	; wait for the next blank
+	lda #$20
+	sta PPUADDR
+	lda #$00
+	sta PPUADDR
+:
+	bit PPUSTATUS
+	bpl :-
+	; enable rendering
+	lda #$0e
+	sta PPUMASK
+	; enable nmi
+	lda #%10100000
+	sta PPUCONTROL
+@notInEndScreen:
 
 	lda #$20
 	sta PPUADDR
@@ -228,6 +260,29 @@ clearField:
 	lda #>msg
 	sta $01
 	jsr doEnqueueTextMessage
+	rts
+
+doShowEndScreen:
+	jsr clearField
+
+	lda #<congrats1
+	sta $00
+	lda #>congrats1
+	sta $01
+	jsr doEnqueueTextMessage
+
+	lda #<congrats2
+	sta $00
+	lda #>congrats2
+	sta $01
+	jsr doEnqueueTextMessage
+
+	lda #<congrats3
+	sta $00
+	lda #>congrats3
+	sta $01
+	jsr doEnqueueTextMessage
+
 	rts
 
 doLoadStage:
@@ -375,13 +430,23 @@ doProcessInput:
 	rts
 
 doMaybeMenu:
+	lda GAME_STATE
+	cmp #GameStateEndScreen
+	beq @notstart
 	lda INPUT
 	and #CTRL_START
 	beq @notstart
 		; go to next stage then
+		inc ACTIVE_STAGE
+		lda ACTIVE_STAGE
+		cmp numberOfStages
+		bne @toNextStage
+		lda #GameStateEndScreen
+		sta GAME_STATE
+		rts
+		@toNextStage:
 		lda #GameStateLoading
 		sta GAME_STATE
-		inc ACTIVE_STAGE
 
 @notstart:
 	rts
@@ -572,25 +637,46 @@ msg_press_start:
 ; The string: "press start to continue"
 .byte $19,$1b,$0e,$1c,$1c,$24,$1c,$1d,$0a,$1b,$1d,$24,$1d,$18,$24,$0c,$18,$17,$1d,$12,$17,$1e,$0e,$00
 
+congrats1:
+.byte $21,$64
+; Encoded string produced by encode.c
+; The string: "congratulations you did it"
+.byte $0c,$18,$17,$10,$1b,$0a,$1d,$1e,$15,$0a,$1d,$12,$18,$17,$1c,$24,$22,$18,$1e,$24,$0d,$12,$0d,$24,$12,$1d,$00
+
+congrats2:
+.byte $22,$09
+; Encoded string produced by encode.c
+; The string: "ask guillermo"
+.byte $0a,$1c,$14,$24,$10,$1e,$12,$15,$15,$0e,$1b,$16,$18,$00
+
+congrats3:
+.byte $22,$48
+; Encoded string produced by encode.c
+; The string: "for more levels"
+.byte $0f,$18,$1b,$24,$16,$18,$1b,$0e,$24,$15,$0e,$1f,$0e,$15,$1c,$00
+
 stagesLookUpTable:
 	.addr map1
 	.addr map2
+numberOfStages:
+	.byte $02
+
 map1:
 ; Encoded first map of the game, for testing purposes
 ; First, the coordinates of the "walkable area"
 ; How many, then y and x compressed in a single byte
 .byte $05
+.byte $44
 .byte $45
-.byte $55
-.byte $48
-.byte $58
-.byte $68
+.byte $74
+.byte $75
+.byte $76
 ; Second, the start locations for the characters
-.byte $45
-.byte $48
+.byte $44
+.byte $74
 ; Last, the exit locations
-.byte $55
-.byte $68
+.byte $45
+.byte $76
 map2:
 ; Encoded second map that requires a little more thinking
 .byte $07
