@@ -18,6 +18,7 @@ OAM_DMA      = $4014
 PPU_BUF_LO   = $0005
 PPU_BUF_HI   = $0006
 PPU_BUF_VAL  = $0007
+STAGE_ADDR   = $0009
 
 P1_COOR      = $0200
 P2_COOR      = $0201
@@ -28,7 +29,6 @@ INPUT        = $0300
 PRESSED      = $0301
 BULK_UPDATE  = $0302
 ACTIVE_STAGE = $0303
-STAGE_ADDR   = $0304
 GAME_STATE   = $0306
 
 
@@ -163,35 +163,48 @@ updateGameState:
 	beq :+
 		rts
 	:
+
+	; get the stage address
+	lda ACTIVE_STAGE
+	asl
+	tax
+	lda stagesLookUpTable,x
+	sta STAGE_ADDR
+	inx
+	lda stagesLookUpTable,x
+	sta STAGE_ADDR+1
+
 	; if both characters are in exit cells, you win
-	ldx map1
-	inx
+	ldy #$00
+	lda (STAGE_ADDR),y
+	tay
+	iny
 	; now map1,x points to the character start location
-	inx
-	inx
+	iny
+	iny
 	; now map1,x points to the exit cell
 	; y contains the ammount of characters in output cells
-	ldy #$0
-	lda map1,x
+	ldx #$0
+	lda (STAGE_ADDR),y
 	cmp P1_COOR
 	bne :+
-		iny
+		inx
 	:
 	cmp P2_COOR
 	bne :+
-		iny
+		inx
 	:
-	inx
-	lda map1,x
+	iny
+	lda (STAGE_ADDR),y
 	cmp P1_COOR
 	bne :+
-		iny
+		inx
 	:
 	cmp P2_COOR
 	bne :+
-		iny
+		inx
 	:
-	cpy #$02
+	cpx #$02
 	bne :+
 		lda #GameStateVictory
 		sta GAME_STATE
@@ -230,8 +243,9 @@ doLoadStage:
 	lda stagesLookUpTable,x
 	sta STAGE_ADDR+1
 
-	ldy map1
-	ldx #$0
+	ldy #$0
+	lda (STAGE_ADDR),y
+	tax
 @nextField:
 	jsr consumeMapCoordinates
 
@@ -239,14 +253,14 @@ doLoadStage:
 	sta PPU_BUF_VAL
 	jsr writeBackgroundBlock
 
-	dey
+	dex
 	bne @nextField
 
-	inx
-	lda map1,x
+	iny
+	lda (STAGE_ADDR),y
 	sta P1_COOR
-	inx
-	lda map1,x
+	iny
+	lda (STAGE_ADDR),y
 	sta P2_COOR
 
 	lda #BLOCK_SPRITE_F2
@@ -260,8 +274,8 @@ doLoadStage:
 
 consumeMapCoordinates:
 ; for the y coordinate
-	inx
-	lda map1,x
+	iny
+	lda (STAGE_ADDR),y
 	lsr
 	lsr
 	lsr
@@ -272,7 +286,7 @@ consumeMapCoordinates:
 	sta PPU_BUF_HI
 
 ; for the x coordinate
-	lda map1,x
+	lda (STAGE_ADDR),y
 	lsr
 	lsr
 	lsr
@@ -285,7 +299,7 @@ consumeMapCoordinates:
 	asl
 	asl
 	sta 0
-	lda map1,x
+	lda (STAGE_ADDR),y
 	and #$0F
 	asl
 	ora 0
@@ -367,6 +381,8 @@ doMaybeMenu:
 		; go to next stage then
 		lda #GameStateLoading
 		sta GAME_STATE
+		inc ACTIVE_STAGE
+
 @notstart:
 	rts
 
@@ -447,23 +463,33 @@ doMaybeMoveCharacters:
 	; now that I have the possible new coordinates,
 	; move the characters if they can
 
-	ldy map1
-	ldx #$00
-@nextBackgroundTile:
+	lda ACTIVE_STAGE
+	asl
+	tax
+	lda stagesLookUpTable,x
+	sta STAGE_ADDR
 	inx
-	lda map1,x
+	lda stagesLookUpTable,x
+	sta STAGE_ADDR+1
+
+	ldy #$00
+	lda (STAGE_ADDR),y
+	tax
+@nextBackgroundTile:
+	iny
+	lda (STAGE_ADDR),y
 	cmp P1_NEXT_COOR
 	bne @player1CannotMoveThere
 	lda P1_NEXT_COOR
 	sta P1_COOR
-	lda map1,x
+	lda (STAGE_ADDR),y
 @player1CannotMoveThere:
 	cmp P2_NEXT_COOR
 	bne @player2CannotMoveThere
 	lda P2_NEXT_COOR
 	sta P2_COOR
 @player2CannotMoveThere:
-	dey
+	dex
 	bne @nextBackgroundTile
 
 	rts
@@ -523,6 +549,8 @@ reset:
 
 	lda #GameStateLoading
 	sta GAME_STATE
+	lda #0
+	sta ACTIVE_STAGE
 BusyLoop:
 	jmp BusyLoop
 
@@ -547,7 +575,6 @@ msg_press_start:
 stagesLookUpTable:
 	.addr map1
 	.addr map2
-
 map1:
 ; Encoded first map of the game, for testing purposes
 ; First, the coordinates of the "walkable area"
