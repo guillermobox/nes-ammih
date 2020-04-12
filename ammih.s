@@ -30,7 +30,8 @@ BULK_UPDATE  = $0302
 ACTIVE_STAGE = $0303
 GAME_STATE   = $0304
 
-PPU_ENCODED  = $0400
+PPU_ENCODED     = $0400
+PPU_ENCODED_LEN = $04FF
 
 OAMADDR      = $0700
 
@@ -39,6 +40,7 @@ BLOCK_SPRITE_F1 = $26
 BLOCK_SPRITE_F2 = $27
 BLOCK_SPRITE_F3 = $28
 GameStateVictory = $02
+GameStateWaiting = $03
 
 DPAD_MASK       = DPAD_UP | DPAD_DOWN | DPAD_LEFT | DPAD_RIGHT
 DPAD_UP         = %00001000
@@ -100,6 +102,7 @@ nmi:
 ;   - N bytes
 doConsumePPUEncoded:
 	ldx #$0
+@nextrow:
 	ldy PPU_ENCODED,x
 	beq @done
 		inx
@@ -114,31 +117,37 @@ doConsumePPUEncoded:
 		    sta PPUDATA
 		    dey
 		bne @nextletter
+	inx
+	jmp @nextrow
 @done:
 	lda #$20
 	sta PPUADDR
 	lda #$00
 	sta PPUADDR
 	sta PPU_ENCODED
-	rts
-
-doEnqueuePPUEncoded:
+	sta PPU_ENCODED_LEN
 	rts
 
 ; locate the address of the text message at 00 (high) 01 (low)
 doEnqueueTextMessage:
 	ldy #$00
-	ldx #$01
+	ldx PPU_ENCODED_LEN
+	inx
 	lda ($00),y
 @next:	sta PPU_ENCODED,x
 	iny
 	inx
 	lda ($00),y
 	bne @next
-	dex
-	dex
-	dex
-	stx PPU_ENCODED
+	stx 1
+	dey
+	dey
+	sty 0
+	ldx PPU_ENCODED_LEN
+	lda 0
+	sta PPU_ENCODED,x
+	lda 1
+	sta PPU_ENCODED_LEN
 	rts
 
 updateGameState:
@@ -177,6 +186,11 @@ updateGameState:
 		lda #<welldone
 		sta $00
 		lda #>welldone
+		sta $01
+		jsr doEnqueueTextMessage
+		lda #<msg_press_start
+		sta $00
+		lda #>msg_press_start
 		sta $01
 		jsr doEnqueueTextMessage
 	:
@@ -475,11 +489,16 @@ msg:
 .byte $0a,$24,$16,$0a,$1d,$0c,$11,$24,$16,$0a,$0d,$0e,$24,$12,$17,$24,$11,$0e,$0a,$1f,$0e,$17,$00
 
 welldone:
-.byte $23,$6b
+.byte $23,$2b
 ; Encoded string produced by encode.c
 ; The string: "well done"
 .byte $20,$0e,$15,$15,$24,$0d,$18,$17,$0e,$00
 
+msg_press_start:
+.byte $23,$64
+; Encoded string produced by encode.c
+; The string: "press start to continue"
+.byte $19,$1b,$0e,$1c,$1c,$24,$1c,$1d,$0a,$1b,$1d,$24,$1d,$18,$24,$0c,$18,$17,$1d,$12,$17,$1e,$0e,$00
 
 map1:
 ; Encoded first map of the game, for testing purposes
