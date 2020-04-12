@@ -28,7 +28,9 @@ INPUT        = $0300
 PRESSED      = $0301
 BULK_UPDATE  = $0302
 ACTIVE_STAGE = $0303
-GAME_STATE   = $0304
+STAGE_ADDR   = $0304
+GAME_STATE   = $0306
+
 
 PPU_ENCODED     = $0400
 PPU_ENCODED_LEN = $04FF
@@ -216,9 +218,17 @@ clearField:
 	rts
 
 doLoadStage:
-	inc ACTIVE_STAGE
-
 	jsr clearField
+
+	; get the stage address
+	lda ACTIVE_STAGE
+	asl
+	tax
+	lda stagesLookUpTable,x
+	sta STAGE_ADDR
+	inx
+	lda stagesLookUpTable,x
+	sta STAGE_ADDR+1
 
 	ldy map1
 	ldx #$0
@@ -534,10 +544,28 @@ msg_press_start:
 ; The string: "press start to continue"
 .byte $19,$1b,$0e,$1c,$1c,$24,$1c,$1d,$0a,$1b,$1d,$24,$1d,$18,$24,$0c,$18,$17,$1d,$12,$17,$1e,$0e,$00
 
+stagesLookUpTable:
+	.addr map1
+	.addr map2
+
 map1:
 ; Encoded first map of the game, for testing purposes
 ; First, the coordinates of the "walkable area"
 ; How many, then y and x compressed in a single byte
+.byte $05
+.byte $45
+.byte $55
+.byte $48
+.byte $58
+.byte $68
+; Second, the start locations for the characters
+.byte $45
+.byte $48
+; Last, the exit locations
+.byte $55
+.byte $68
+map2:
+; Encoded second map that requires a little more thinking
 .byte $07
 .byte $45
 .byte $55
@@ -547,11 +575,8 @@ map1:
 .byte $68
 .byte $69
 ; Second, the start locations for the characters
-.byte $45
-.byte $48
-; Last, the exit locations
-.byte $55
-.byte $68
+.byte $45, $48
+.byte $55, $68
 
 updatePlayerSprites:
 	clc
