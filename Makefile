@@ -10,5 +10,5 @@ clean:
 ammih.nes: prg.bin chr.bin assemble
 	./assemble -p prg.bin -c chr.bin -o ammih.nes
 
-prg.bin: ammih.s ammih.cfg
+prg.bin: ammih.s ammih.cfg initialize.s stages.s text.s
 	cl65 --config ammih.cfg ammih.s -o prg.bin

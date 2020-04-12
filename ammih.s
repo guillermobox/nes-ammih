@@ -31,7 +31,6 @@ BULK_UPDATE  = $0302
 ACTIVE_STAGE = $0303
 GAME_STATE   = $0306
 
-
 PPU_ENCODED     = $0400
 PPU_ENCODED_LEN = $04FF
 
@@ -167,28 +166,6 @@ doConsumePPUEncoded:
 	sta PPU_ENCODED_LEN
 	rts
 
-; locate the address of the text message at 00 (high) 01 (low)
-doEnqueueTextMessage:
-	ldy #$00
-	ldx PPU_ENCODED_LEN
-	inx
-	lda ($00),y
-@next:	sta PPU_ENCODED,x
-	iny
-	inx
-	lda ($00),y
-	bne @next
-	stx 1
-	dey
-	dey
-	sty 0
-	ldx PPU_ENCODED_LEN
-	lda 0
-	sta PPU_ENCODED,x
-	lda 1
-	sta PPU_ENCODED_LEN
-	rts
-
 updateGameState:
 	lda GAME_STATE
 	cmp #GameStatePlaying
@@ -196,6 +173,7 @@ updateGameState:
 		rts
 	:
 
+	; todo: this should not be here, instead abstract	
 	; get the stage address
 	lda ACTIVE_STAGE
 	asl
@@ -283,104 +261,6 @@ doShowEndScreen:
 	sta $01
 	jsr doEnqueueTextMessage
 
-	rts
-
-doLoadStage:
-	jsr clearField
-
-	; get the stage address
-	lda ACTIVE_STAGE
-	asl
-	tax
-	lda stagesLookUpTable,x
-	sta STAGE_ADDR
-	inx
-	lda stagesLookUpTable,x
-	sta STAGE_ADDR+1
-
-	ldy #$0
-	lda (STAGE_ADDR),y
-	tax
-@nextField:
-	jsr consumeMapCoordinates
-
-	lda #BLOCK_SPRITE_F1
-	sta PPU_BUF_VAL
-	jsr writeBackgroundBlock
-
-	dex
-	bne @nextField
-
-	iny
-	lda (STAGE_ADDR),y
-	sta P1_COOR
-	iny
-	lda (STAGE_ADDR),y
-	sta P2_COOR
-
-	lda #BLOCK_SPRITE_F2
-	sta PPU_BUF_VAL
-	jsr consumeMapCoordinates
-	jsr writeBackgroundBlock
-	jsr consumeMapCoordinates
-	jsr writeBackgroundBlock
-
-	rts
-
-consumeMapCoordinates:
-; for the y coordinate
-	iny
-	lda (STAGE_ADDR),y
-	lsr
-	lsr
-	lsr
-	lsr
-	lsr
-	lsr
-	ora #$20
-	sta PPU_BUF_HI
-
-; for the x coordinate
-	lda (STAGE_ADDR),y
-	lsr
-	lsr
-	lsr
-	lsr
-	and #$03
-	asl
-	asl
-	asl
-	asl
-	asl
-	asl
-	sta 0
-	lda (STAGE_ADDR),y
-	and #$0F
-	asl
-	ora 0
-	sta PPU_BUF_LO
-	rts
-
-writeBackgroundBlock:
-	lda PPU_BUF_HI
-	sta PPUADDR
-	lda PPU_BUF_LO
-	sta PPUADDR
-	lda PPU_BUF_VAL
-	sta PPUDATA
-	sta PPUDATA
-	clc
-	lda PPU_BUF_LO
-	adc #$20
-	lda #$00
-	adc PPU_BUF_HI
-	sta PPUADDR
-	lda PPU_BUF_LO
-	adc #$20
-	sta PPUADDR
-	lda PPU_BUF_VAL
-	sta PPUDATA
-	sta PPUDATA
 	rts
 
 doProcessInput:
@@ -528,6 +408,7 @@ doMaybeMoveCharacters:
 	; now that I have the possible new coordinates,
 	; move the characters if they can
 
+	; todo: this should not be here at all, abstract this
 	lda ACTIVE_STAGE
 	asl
 	tax
@@ -561,160 +442,6 @@ doMaybeMoveCharacters:
 
 doTriggerAudio:
 	rts
-
-reset:
-	; reset cpu state to a well known state
-	sei             ; ignore IRQs
-	cld             ; disable decimal mode
-	ldx #$ff
-	txs             ; Set up stack
-	inx             ; now X = 0
-	stx APU_DMC     ; disable DMC IRQs
-	lda PPUSTATUS   ; clear the status by reading it
-	stx PPUCONTROL  ; disable NMI
-	stx PPUMASK     ; disable rendering
-
-	; The vblank flag is in an unknown state after reset,
-	; so it is cleared here to make sure that @vblankwait1
-	; does not exit immediately.
-	bit PPUSTATUS
-
-@vblankwait1:
-	bit PPUSTATUS
-	bpl @vblankwait1
-
-	txa
-@clrmem:
-	sta $000,x
-	sta $100,x
-	sta $200,x
-	sta $300,x
-	sta $400,x
-	sta $500,x
-	sta $600,x
-	sta $700,x
-	inx
-	bne @clrmem
-
-@vblankwait2:
-	bit PPUSTATUS
-	bpl @vblankwait2
-
-	jsr initializeNametables
-	jsr initializeApu
-	jsr initializePalette
-	jsr initializeAttributeTable
-	jsr initializeDmaTable
-	jsr updatePlayerSprites
-
-	; activate NMI and large sprites
-	lda PPUCONTROL
-	ora #%10100000
-	sta PPUCONTROL
-
-	lda #GameStateLoading
-	sta GAME_STATE
-	lda #0
-	sta ACTIVE_STAGE
-BusyLoop:
-	jmp BusyLoop
-
-msg:
-.byte $20,$44
-; Encoded string produced by encode.c
-; The string: "a match made in heaven"
-.byte $0a,$24,$16,$0a,$1d,$0c,$11,$24,$16,$0a,$0d,$0e,$24,$12,$17,$24,$11,$0e,$0a,$1f,$0e,$17,$00
-
-welldone:
-.byte $23,$2b
-; Encoded string produced by encode.c
-; The string: "well done"
-.byte $20,$0e,$15,$15,$24,$0d,$18,$17,$0e,$00
-
-msg_press_start:
-.byte $23,$64
-; Encoded string produced by encode.c
-; The string: "press start to continue"
-.byte $19,$1b,$0e,$1c,$1c,$24,$1c,$1d,$0a,$1b,$1d,$24,$1d,$18,$24,$0c,$18,$17,$1d,$12,$17,$1e,$0e,$00
-
-congrats1:
-.byte $21,$64
-; Encoded string produced by encode.c
-; The string: "congratulations you did it"
-.byte $0c,$18,$17,$10,$1b,$0a,$1d,$1e,$15,$0a,$1d,$12,$18,$17,$1c,$24,$22,$18,$1e,$24,$0d,$12,$0d,$24,$12,$1d,$00
-
-congrats2:
-.byte $22,$09
-; Encoded string produced by encode.c
-; The string: "ask guillermo"
-.byte $0a,$1c,$14,$24,$10,$1e,$12,$15,$15,$0e,$1b,$16,$18,$00
-
-congrats3:
-.byte $22,$48
-; Encoded string produced by encode.c
-; The string: "for more levels"
-.byte $0f,$18,$1b,$24,$16,$18,$1b,$0e,$24,$15,$0e,$1f,$0e,$15,$1c,$00
-
-stagesLookUpTable:
-	.addr map1
-	.addr map2
-	.addr map3
-numberOfStages:
-	.byte $03
-
-map1:
-; Encoded first map of the game, for testing purposes
-; First, the coordinates of the "walkable area"
-; How many, then y and x compressed in a single byte
-.byte $05
-.byte $44
-.byte $45
-.byte $74
-.byte $75
-.byte $76
-; Second, the start locations for the characters
-.byte $44
-.byte $74
-; Last, the exit locations
-.byte $45
-.byte $76
-map2:
-; Encoded second map that requires a little more thinking
-.byte $07
-.byte $45
-.byte $55
-.byte $65
-.byte $48
-.byte $58
-.byte $68
-.byte $69
-; Second, the start locations for the characters
-.byte $45, $48
-.byte $55, $68
-map3:
-; Encoded third map that requires a little more thinking
-.byte $12
-.byte $44
-.byte $45
-.byte $46
-.byte $47
-.byte $54
-.byte $55
-.byte $56
-.byte $57
-.byte $65
-.byte $66
-.byte $67
-.byte $5a
-.byte $5b
-.byte $5c
-.byte $6a
-.byte $6b
-.byte $6c
-.byte $7a
-; Second, the start locations for the characters
-.byte $56, $7a
-.byte $56, $6c
 
 updatePlayerSprites:
 	clc
@@ -783,109 +510,66 @@ updatePlayerSprites:
 	sta OAMADDR+1+4+8
 	rts
 
-; A nametable has 30 rows of 32 sprites each
-clearNametable:
-	lda #BLOCK_SPRITE_BG
-	ldy #$1e
-@row:
-	ldx #$20
-@back:
-	sta PPUDATA
-	dex
-	bne @back
-	dey
-	bne @row
-	rts
+reset:
+	; reset cpu state to a well known state
+	sei             ; ignore IRQs
+	cld             ; disable decimal mode
+	ldx #$ff
+	txs             ; Set up stack
+	inx             ; now X = 0
+	stx APU_DMC     ; disable DMC IRQs
+	lda PPUSTATUS   ; clear the status by reading it
+	stx PPUCONTROL  ; disable NMI
+	stx PPUMASK     ; disable rendering
 
-initializeNametables:
-	lda #$20
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
-	jsr clearNametable
+	; The vblank flag is in an unknown state after reset,
+	; so it is cleared here to make sure that @vblankwait1
+	; does not exit immediately.
+	bit PPUSTATUS
 
-	lda #$28
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
-	jsr clearNametable
+@vblankwait1:
+	bit PPUSTATUS
+	bpl @vblankwait1
 
-	rts
+	txa
+@clrmem:
+	sta $000,x
+	sta $100,x
+	sta $200,x
+	sta $300,x
+	sta $400,x
+	sta $500,x
+	sta $600,x
+	sta $700,x
+	inx
+	bne @clrmem
 
-initializeApu:
-	ldy #$13
-@loop:  lda audioregs,y
-	sta APU_ADDR,y
-	dey
-	bpl @loop
-	lda #$0f
-	sta APU_STATUS
-	lda #$40
-	sta APU_FRAME
-	rts
+@vblankwait2:
+	bit PPUSTATUS
+	bpl @vblankwait2
 
-audioregs:
-        .byte $30,$08,$00,$00
-        .byte $30,$08,$00,$00
-        .byte $80,$00,$00,$00
-        .byte $30,$00,$00,$00
-        .byte $00,$00,$00,$00
+	jsr initializeNametables
+	jsr initializeApu
+	jsr initializePalette
+	jsr initializeAttributeTable
+	jsr initializeDmaTable
+	jsr updatePlayerSprites
 
-initializeDmaTable:
-	ldx #0
-@next_sprite:
+	; activate NMI and large sprites
+	lda PPUCONTROL
+	ora #%10100000
+	sta PPUCONTROL
+
+	lda #GameStateLoading
+	sta GAME_STATE
 	lda #0
-	sta OAMADDR,x ; y position
-	inx
-	lda #BLOCK_SPRITE_BG
-	sta OAMADDR,x ; sprite index
-	inx
-	lda #0
-	sta OAMADDR,x ; palette
-	inx
-	sta OAMADDR,x ; x position
-	inx
-	bne @next_sprite
-	rts
+	sta ACTIVE_STAGE
+BusyLoop:
+	jmp BusyLoop
 
-initializeAttributeTable:
-	lda #$23
-	sta PPUADDR
-	lda #$c0
-	sta PPUADDR
-	lda #$00
-	ldx #$40
-@nextAttributeByte:
-	sta PPUDATA
-	dex
-	bne @nextAttributeByte
-	rts
-
-initializePalette:
-	lda #$3f
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
-	ldx #0
-@nextPaletteEntry:
-	lda defaultPalette,x
-	sta PPUDATA
-	inx
-	cpx #$20
-	bne @nextPaletteEntry
-	rts
-
-defaultPalette:
-	; the background values for sprites
-	; have priority because of mirroring
-	.byte $21,$30,$27,$3f ; background 0
-	.byte $3f,$3f,$3f,$3f ; background 1
-	.byte $3f,$3f,$3f,$3f ; background 2
-	.byte $3f,$3f,$3f,$3f ; background 3
-	.byte $21,$16,$37,$07 ; sprite 0
-	.byte $3f,$19,$37,$07 ; sprite 1
-	.byte $3f,$3f,$3f,$3f ; sprite 2
-	.byte $3f,$3f,$3f,$3f ; sprite 3
+.include "text.s"
+.include "stages.s"
+.include "initialize.s"
 
 .segment "VECTORS"
 	.addr nmi
