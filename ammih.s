@@ -18,6 +18,7 @@ OAM_DMA      = $4014
 PPU_BUF_LO   = $0005
 PPU_BUF_HI   = $0006
 PPU_BUF_VAL  = $0007
+
 P1_COOR      = $0200
 P2_COOR      = $0201
 P1_NEXT_COOR = $0202
@@ -27,14 +28,17 @@ INPUT        = $0300
 PRESSED      = $0301
 BULK_UPDATE  = $0302
 ACTIVE_STAGE = $0303
+GAME_STATE   = $0304
+
+PPU_ENCODED  = $0400
 
 OAMADDR      = $0700
-
 
 BLOCK_SPRITE_BG = $24
 BLOCK_SPRITE_F1 = $26
 BLOCK_SPRITE_F2 = $27
 BLOCK_SPRITE_F3 = $28
+GameStateVictory = $02
 
 DPAD_MASK       = DPAD_UP | DPAD_DOWN | DPAD_LEFT | DPAD_RIGHT
 DPAD_UP         = %00001000
@@ -44,36 +48,19 @@ DPAD_RIGHT      = %00000001
 
 .segment "CODE"
 nmi:
-
-	; write title of the game
-	lda #$20
-	sta PPUADDR
-	lda #$24
-	sta PPUADDR
-
-	ldx #$00
-nextletter:
-	lda msg,x
-	beq textdone
-	sta PPUDATA
-	inx
-	jmp nextletter
-textdone:
+	jsr doConsumePPUEncoded
 
 	; enqueue DMA transfer to OAM
 	lda #>OAMADDR
 	sta OAM_DMA
 
-	lda #$20
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
-
 	; ppu critical phase finished
 	jsr doProcessInput
 	jsr doTriggerAudio
 	jsr updatePlayerSprites
+	jsr updateGameState
 
+	; this might load a stage if ACTIVE_STAGE = 0
 	lda ACTIVE_STAGE
 	bne @stageIsAlreadyLoaded
 	; disable rendering
@@ -106,6 +93,94 @@ textdone:
 	sta PPUADDR
 
 	rti
+
+; PPU encoded instructions are, per byte:
+;   - number of characters (N)
+;   - ppuaddress: high, low
+;   - N bytes
+doConsumePPUEncoded:
+	ldx #$0
+	ldy PPU_ENCODED,x
+	beq @done
+		inx
+		lda PPU_ENCODED,x
+		sta PPUADDR
+		inx
+		lda PPU_ENCODED,x
+		sta PPUADDR
+		@nextletter:
+		    inx
+		    lda PPU_ENCODED,x
+		    sta PPUDATA
+		    dey
+		bne @nextletter
+@done:
+	lda #$20
+	sta PPUADDR
+	lda #$00
+	sta PPUADDR
+	sta PPU_ENCODED
+	rts
+
+doEnqueuePPUEncoded:
+	rts
+
+; locate the address of the text message at 00 (high) 01 (low)
+doEnqueueTextMessage:
+	ldy #$00
+	ldx #$01
+	lda ($00),y
+@next:	sta PPU_ENCODED,x
+	iny
+	inx
+	lda ($00),y
+	bne @next
+	dex
+	dex
+	dex
+	stx PPU_ENCODED
+	rts
+
+updateGameState:
+	; if both characters are in exit cells, you win
+	ldx map1
+	inx
+	; now map1,x points to the character start location
+	inx
+	inx
+	; now map1,x points to the exit cell
+	; y contains the ammount of characters in output cells
+	ldy #$0
+	lda map1,x
+	cmp P1_COOR
+	bne :+
+		iny
+	:
+	cmp P2_COOR
+	bne :+
+		iny
+	:
+	inx
+	lda map1,x
+	cmp P1_COOR
+	bne :+
+		iny
+	:
+	cmp P2_COOR
+	bne :+
+		iny
+	:
+	cpy #$02
+	bne :+
+		lda #GameStateVictory
+		sta GAME_STATE
+		lda #<welldone
+		sta $00
+		lda #>welldone
+		sta $01
+		jsr doEnqueueTextMessage
+	:
+	rts
 
 doLoadStage:
 	inc ACTIVE_STAGE
@@ -222,7 +297,12 @@ doProcessInput:
 	beq @moveCharacter
 	rts
 @moveCharacter:
+	; we dispatch difference things depending on the game state
+	lda GAME_STATE
+	cmp #GameStateVictory
+	beq :+
 	jsr doMaybeMoveCharacters
+:
 	lda #1
 	sta PRESSED
 @finishedInput:
@@ -378,13 +458,28 @@ reset:
 	lda PPUCONTROL
 	ora #%10100000
 	sta PPUCONTROL
+
+	lda #<msg
+	sta $00
+	lda #>msg
+	sta $01
+	jsr doEnqueueTextMessage
+
 BusyLoop:
 	jmp BusyLoop
 
 msg:
+.byte $20,$44
 ; Encoded string produced by encode.c
 ; The string: "a match made in heaven"
 .byte $0a,$24,$16,$0a,$1d,$0c,$11,$24,$16,$0a,$0d,$0e,$24,$12,$17,$24,$11,$0e,$0a,$1f,$0e,$17,$00
+
+welldone:
+.byte $23,$6b
+; Encoded string produced by encode.c
+; The string: "well done"
+.byte $20,$0e,$15,$15,$24,$0d,$18,$17,$0e,$00
+
 
 map1:
 ; Encoded first map of the game, for testing purposes
