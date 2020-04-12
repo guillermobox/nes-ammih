@@ -213,66 +213,29 @@ enqueueNumber:
 updateGameState:
 	lda GAME_STATE
 	cmp #GameStatePlaying
-	beq :+
-		rts
-	:
+	bne @return
+	lda P1_COOR
+	jsr stageTileType
+	and #$02
+	beq @return
+	lda P2_COOR
+	jsr stageTileType
+	and #$02
+	beq @return
 
-	; todo: this should not be here, instead abstract	
-	; get the stage address
-	lda ACTIVE_STAGE
-	asl
-	tax
-	lda stagesLookUpTable,x
-	sta STAGE_ADDR
-	inx
-	lda stagesLookUpTable,x
-	sta STAGE_ADDR+1
-
-	; if both characters are in exit cells, you win
-	ldy #$00
-	lda (STAGE_ADDR),y
-	tay
-	iny
-	; now map1,x points to the character start location
-	iny
-	iny
-	; now map1,x points to the exit cell
-	; y contains the ammount of characters in output cells
-	ldx #$0
-	lda (STAGE_ADDR),y
-	cmp P1_COOR
-	bne :+
-		inx
-	:
-	cmp P2_COOR
-	bne :+
-		inx
-	:
-	iny
-	lda (STAGE_ADDR),y
-	cmp P1_COOR
-	bne :+
-		inx
-	:
-	cmp P2_COOR
-	bne :+
-		inx
-	:
-	cpx #$02
-	bne :+
-		lda #GameStateVictory
-		sta GAME_STATE
-		lda #<welldone
-		sta $00
-		lda #>welldone
-		sta $01
-		jsr doEnqueueTextMessage
-		lda #<msg_press_start
-		sta $00
-		lda #>msg_press_start
-		sta $01
-		jsr doEnqueueTextMessage
-	:
+	lda #GameStateVictory
+	sta GAME_STATE
+	lda #<welldone
+	sta $00
+	lda #>welldone
+	sta $01
+	jsr doEnqueueTextMessage
+	lda #<msg_press_start
+	sta $00
+	lda #>msg_press_start
+	sta $01
+	jsr doEnqueueTextMessage
+@return:
 	rts
 
 clearField:
@@ -452,38 +415,22 @@ doMaybeMoveCharacters:
 	; now that I have the possible new coordinates,
 	; move the characters if they can
 
-	; todo: this should not be here at all, abstract this
-	lda ACTIVE_STAGE
-	asl
-	tax
-	lda stagesLookUpTable,x
-	sta STAGE_ADDR
-	inx
-	lda stagesLookUpTable,x
-	sta STAGE_ADDR+1
-
-	ldy #$00
-	sty A_CHARACTER_MOVED
-	lda (STAGE_ADDR),y
-	tax
-@nextBackgroundTile:
-	iny
-	lda (STAGE_ADDR),y
-	cmp P1_NEXT_COOR
-	bne @player1CannotMoveThere
-	inc A_CHARACTER_MOVED
+	lda #$00
+	sta A_CHARACTER_MOVED
 	lda P1_NEXT_COOR
-	sta P1_COOR
-	lda (STAGE_ADDR),y
-@player1CannotMoveThere:
-	cmp P2_NEXT_COOR
-	bne @player2CannotMoveThere
-	inc A_CHARACTER_MOVED
+	jsr stageTileType
+	beq :+ ; a tileType 0 is not walkable
+		lda P1_NEXT_COOR
+		sta P1_COOR
+		inc A_CHARACTER_MOVED
+	:
 	lda P2_NEXT_COOR
-	sta P2_COOR
-@player2CannotMoveThere:
-	dex
-	bne @nextBackgroundTile
+	jsr stageTileType
+	beq :+ ; a tileType 0 is not walkable
+		lda P2_NEXT_COOR
+		sta P2_COOR
+		inc A_CHARACTER_MOVED
+	:
 
 	ldx A_CHARACTER_MOVED
 	beq @nobodymoved

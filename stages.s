@@ -97,6 +97,53 @@ writeBackgroundBlock:
 	sta PPUDATA
 	rts
 
+; Read on A the cell coordinates, return on A the cell type
+stageTileType:
+	sta $31
+	lda ACTIVE_STAGE
+	asl
+	tax
+	lda stagesLookUpTable,x
+	sta STAGE_ADDR
+	inx
+	lda stagesLookUpTable,x
+	sta STAGE_ADDR+1
+
+	ldy #$00
+	lda (STAGE_ADDR),y
+	tax
+@next_tile:
+	iny
+	lda (STAGE_ADDR),y
+	cmp $31
+	beq @found_tile
+	dex
+	bne @next_tile
+	lda #$00
+	rts
+@found_tile:
+	; the tile might be a exit tile
+	; maybe there are still tiles to process
+	ldy #$00
+	lda (STAGE_ADDR),y
+	tay
+	iny
+	iny
+	iny
+	lda (STAGE_ADDR),y
+	cmp $31
+	beq @found_exit_tile
+	iny
+	lda (STAGE_ADDR),y
+	cmp $31
+	beq @found_exit_tile
+
+	lda #$01
+	rts
+@found_exit_tile:
+	lda #$02
+	rts
+
 stagesLookUpTable:
 	.addr map1
 	.addr map2
