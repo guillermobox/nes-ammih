@@ -15,7 +15,6 @@ INPUT_CTRL_1 = $4016
 INPUT_CTRL_2 = $4017
 OAM_DMA      = $4014
 
-beep         = $0004
 PPU_BUF_LO   = $0005
 PPU_BUF_HI   = $0006
 PPU_BUF_VAL  = $0007
@@ -328,19 +327,6 @@ doMaybeMoveCharacters:
 	rts
 
 doTriggerAudio:
-	lda beep
-	beq @finished
-	lda #<179
-	sta $4002
-	lda #>179
-	and #$07
-	ora #%10100000
-	sta $4003
-	lda #%10011111
-	sta $4000
-@finished:
-	lda #0
-	sta beep
 	rts
 
 reset:
@@ -387,9 +373,6 @@ reset:
 	jsr initializeAttributeTable
 	jsr initializeDmaTable
 	jsr updatePlayerSprites
-
-	lda #1
-	sta beep
 
 	; activate NMI and large sprites
 	lda PPUCONTROL
