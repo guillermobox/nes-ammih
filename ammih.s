@@ -40,6 +40,7 @@ BLOCK_SPRITE_F1 = $26
 BLOCK_SPRITE_F2 = $27
 BLOCK_SPRITE_F3 = $28
 
+GameStateLoading = $00
 GameStatePlaying = $01
 GameStateVictory = $02
 
@@ -48,6 +49,7 @@ DPAD_UP         = %00001000
 DPAD_DOWN       = %00000100
 DPAD_LEFT       = %00000010
 DPAD_RIGHT      = %00000001
+CTRL_START      = %00010000
 
 .segment "CODE"
 nmi:
@@ -63,8 +65,7 @@ nmi:
 	jsr updatePlayerSprites
 	jsr updateGameState
 
-	; this might load a stage if ACTIVE_STAGE = 0
-	lda ACTIVE_STAGE
+	lda GAME_STATE
 	bne @stageIsAlreadyLoaded
 	; disable rendering
 	ldx #0
@@ -88,6 +89,8 @@ nmi:
 	; enable nmi
 	lda #%10100000
 	sta PPUCONTROL
+	lda #GameStatePlaying
+	sta GAME_STATE
 @stageIsAlreadyLoaded:
 
 	lda #$20
@@ -322,10 +325,25 @@ doProcessInput:
 	cmp #GameStatePlaying
 	bne :+
 	jsr doMaybeMoveCharacters
+	jmp @done
 :
+	cmp #GameStateVictory
+	bne :+
+	jsr doMaybeMenu
+	jmp @done
+:
+@done:
 	lda #1
 	sta PRESSED
 @finishedInput:
+	rts
+
+doMaybeMenu:
+	lda INPUT
+	and #CTRL_START
+	beq @notstart
+	sta $04a0
+@notstart:
 	rts
 
 doMaybeMoveCharacters:
@@ -485,7 +503,7 @@ reset:
 	sta $01
 	jsr doEnqueueTextMessage
 
-	lda #GameStatePlaying
+	lda #GameStateLoading
 	sta GAME_STATE
 BusyLoop:
 	jmp BusyLoop
