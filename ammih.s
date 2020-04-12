@@ -107,20 +107,21 @@ nmi:
 doConsumePPUEncoded:
 	ldx #$0
 @nextrow:
-	ldy PPU_ENCODED,x
+	cpx PPU_ENCODED_LEN
 	beq @done
-		inx
-		lda PPU_ENCODED,x
-		sta PPUADDR
-		inx
-		lda PPU_ENCODED,x
-		sta PPUADDR
-		@nextletter:
-		    inx
-		    lda PPU_ENCODED,x
-		    sta PPUDATA
-		    dey
-		bne @nextletter
+	ldy PPU_ENCODED,x
+	inx
+	lda PPU_ENCODED,x
+	sta PPUADDR
+	inx
+	lda PPU_ENCODED,x
+	sta PPUADDR
+	@nextletter:
+	    inx
+	    lda PPU_ENCODED,x
+	    sta PPUDATA
+	    dey
+	bne @nextletter
 	inx
 	jmp @nextrow
 @done:
@@ -205,8 +206,19 @@ updateGameState:
 	:
 	rts
 
+clearField:
+	jsr initializeNametables
+	lda #<msg
+	sta $00
+	lda #>msg
+	sta $01
+	jsr doEnqueueTextMessage
+	rts
+
 doLoadStage:
 	inc ACTIVE_STAGE
+
+	jsr clearField
 
 	ldy map1
 	ldx #$0
@@ -498,12 +510,6 @@ reset:
 	lda PPUCONTROL
 	ora #%10100000
 	sta PPUCONTROL
-
-	lda #<msg
-	sta $00
-	lda #>msg
-	sta $01
-	jsr doEnqueueTextMessage
 
 	lda #GameStateLoading
 	sta GAME_STATE
