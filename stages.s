@@ -187,10 +187,10 @@ stageTileType:
 	rts
 
 stagesLookUpTable:
-	.addr map4
 	.addr map1
 	.addr map2
 	.addr map3
+	.addr map4
 
 numberOfStages:
 	.byte $04
