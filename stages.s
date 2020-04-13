@@ -13,6 +13,8 @@ doLoadStage:
 	sta STAGE_ADDR+1
 
 	ldy #$0
+
+	; CONSUME THE BACKGROUND TILES
 	lda (STAGE_ADDR),y
 	tax
 @nextField:
@@ -25,6 +27,10 @@ doLoadStage:
 	dex
 	bne @nextField
 
+	; CONSUME THE DEATH TILES
+	iny
+
+	; CONSUME THE CHARACTERS STARTING POSITIONS
 	iny
 	lda (STAGE_ADDR),y
 	sta P1_COOR
@@ -32,6 +38,7 @@ doLoadStage:
 	lda (STAGE_ADDR),y
 	sta P2_COOR
 
+	; CONSUME THE CHARACTERS WINNING POSITIONS
 	lda #BLOCK_SPRITE_F2
 	sta PPU_BUF_VAL
 	jsr consumeMapCoordinates
@@ -128,8 +135,15 @@ stageTileType:
 	lda (STAGE_ADDR),y
 	tay
 	iny
+
+	; test for killing tiles
+	iny
+
+	; skip character starting positions
 	iny
 	iny
+
+	; test for exit tiles
 	lda (STAGE_ADDR),y
 	cmp $31
 	beq @found_exit_tile
@@ -162,6 +176,9 @@ map1:
 .byte $74
 .byte $75
 .byte $76
+; Now the coordinates of the "dead area"
+; How many, then y and x compressed in a single byte
+.byte $00
 ; Second, the start locations for the characters
 .byte $44
 .byte $74
@@ -178,6 +195,9 @@ map2:
 .byte $58
 .byte $68
 .byte $69
+; Now the coordinates of the "dead area"
+; How many, then y and x compressed in a single byte
+.byte $00
 ; Second, the start locations for the characters
 .byte $45, $48
 .byte $55, $68
@@ -202,6 +222,9 @@ map3:
 .byte $6b
 .byte $6c
 .byte $7a
+; Now the coordinates of the "dead area"
+; How many, then y and x compressed in a single byte
+.byte $00
 ; Second, the start locations for the characters
 .byte $56, $7a
 .byte $56, $6c
