@@ -48,6 +48,7 @@ GameStatePlaying = $01
 GameStateVictory = $02
 GameStateEndScreen = $03
 GameStateIdle = $04
+GameStateFailure = $05
 
 DPAD_MASK       = DPAD_UP | DPAD_DOWN | DPAD_LEFT | DPAD_RIGHT
 DPAD_UP         = %00001000
@@ -216,12 +217,16 @@ updateGameState:
 	bne @return
 	lda P1_COOR
 	jsr stageTileType
-	and #$02
+	cmp #$01
 	beq @return
+	cmp #$04
+	beq @died_return
 	lda P2_COOR
 	jsr stageTileType
-	and #$02
+	cmp #$01
 	beq @return
+	cmp #$04
+	beq @died_return
 
 	lda #GameStateVictory
 	sta GAME_STATE
@@ -236,6 +241,20 @@ updateGameState:
 	sta $01
 	jsr doEnqueueTextMessage
 @return:
+	rts
+@died_return:
+	lda #GameStateFailure
+	sta GAME_STATE
+	lda #<ohman
+	sta $00
+	lda #>ohman
+	sta $01
+	jsr doEnqueueTextMessage
+	lda #<msg_try_again
+	sta $00
+	lda #>msg_try_again
+	sta $01
+	jsr doEnqueueTextMessage
 	rts
 
 clearField:
@@ -310,6 +329,11 @@ doProcessInput:
 	jsr doMaybeMenu
 	jmp @done
 :
+	cmp #GameStateFailure
+	bne :+
+	jsr doMaybeMenu
+	jmp @done
+:
 @done:
 	lda #1
 	sta PRESSED
@@ -324,6 +348,9 @@ doMaybeMenu:
 	and #CTRL_START
 	beq @notstart
 		; go to next stage then
+		lda GAME_STATE
+		cmp #GameStateFailure
+		beq @toNextStage
 		inc ACTIVE_STAGE
 		lda ACTIVE_STAGE
 		cmp numberOfStages
