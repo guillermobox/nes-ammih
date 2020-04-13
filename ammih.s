@@ -65,6 +65,11 @@ nmi:
 	lda #>OAMADDR
 	sta OAM_DMA
 
+	lda #$20
+	sta PPUADDR
+	lda #$00
+	sta PPUADDR
+
 	; ppu critical phase finished
 	jsr doProcessInput
 	jsr doTriggerAudio
@@ -101,6 +106,11 @@ nmi:
 	sta PPUCONTROL
 	lda #GameStatePlaying
 	sta GAME_STATE
+
+	lda #$20
+	sta PPUADDR
+	lda #$00
+	sta PPUADDR
 @stageIsAlreadyLoaded:
 
 	lda GAME_STATE
@@ -130,12 +140,12 @@ nmi:
 	; enable nmi
 	lda #%10100000
 	sta PPUCONTROL
-@notInEndScreen:
 
 	lda #$20
 	sta PPUADDR
 	lda #$00
 	sta PPUADDR
+@notInEndScreen:
 
 	rti
 
