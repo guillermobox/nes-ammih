@@ -93,7 +93,7 @@ initializePalette:
 defaultPalette:
 	; the background values for sprites
 	; have priority because of mirroring
-	.byte $21,$30,$27,$3f ; background 0
+	.byte $21,$30,$27,$00 ; background 0
 	.byte $3f,$3f,$3f,$3f ; background 1
 	.byte $3f,$3f,$3f,$3f ; background 2
 	.byte $3f,$3f,$3f,$3f ; background 3

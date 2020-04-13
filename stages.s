@@ -116,6 +116,7 @@ writeBackgroundBlock:
 	rts
 
 ; Read on A the cell coordinates, return on A the cell type
+; uses zero page $31, fix that
 stageTileType:
 	sta $31
 	lda ACTIVE_STAGE
@@ -186,35 +187,13 @@ stageTileType:
 	rts
 
 stagesLookUpTable:
-	.addr map0
+	.addr map4
 	.addr map1
 	.addr map2
 	.addr map3
 
 numberOfStages:
 	.byte $04
-
-map0:
-; Encoded first map of the game, for testing purposes
-; First, the coordinates of the "walkable area"
-; How many, then y and x compressed in a single byte
-.byte $06
-.byte $44
-.byte $45
-.byte $74
-.byte $75
-.byte $76
-.byte $85
-; Now the coordinates of the "dead area"
-; How many, then y and x compressed in a single byte
-.byte $01
-.byte $85
-; Second, the start locations for the characters
-.byte $44
-.byte $74
-; Last, the exit locations
-.byte $45
-.byte $76
 
 map1:
 ; Encoded first map of the game, for testing purposes
@@ -278,4 +257,36 @@ map3:
 ; Second, the start locations for the characters
 .byte $56, $7a
 .byte $56, $6c
+map4:
+; How many, then y and x compressed in a single byte
+.byte 15
+.byte $44
+.byte $45
+.byte $53
+.byte $54
+.byte $55
+.byte $63
+.byte $64
+.byte $65
+.byte $48
+.byte $58
+.byte $59
+.byte $68
+.byte $69
+.byte $78
+.byte $79
+; Now the coordinates of the "dead area"
+; How many, then y and x compressed in a single byte
+.byte $04
+.byte $45
+.byte $55
+.byte $65
+.byte $68
+; Second, the start locations for the characters
+.byte $44
+.byte $48
+; Last, the exit locations
+.byte $63
+.byte $78
+
 

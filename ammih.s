@@ -211,35 +211,36 @@ enqueueNumber:
 	stx PPU_ENCODED_LEN
 	rts
 
+; uses zero page $00, $01
 updateGameState:
 	lda GAME_STATE
 	cmp #GameStatePlaying
 	bne @return
+
 	lda P1_COOR
 	jsr stageTileType
-	cmp #$01
-	beq @return
-	cmp #$04
-	beq @died_return
+	sta $00
 	lda P2_COOR
 	jsr stageTileType
-	cmp #$01
-	beq @return
+	sta $01
+
+	; if any of them died, we died
+	lda $00
 	cmp #$04
 	beq @died_return
+	lda $01
+	cmp #$04
+	beq @died_return
+	; if any of them did not win, we return
+	lda $00
+	cmp #$02
+	bne @return
+	lda $01
+	cmp #$02
+	bne @return
+	; otherwise, we win
+	jmp @victory_return
 
-	lda #GameStateVictory
-	sta GAME_STATE
-	lda #<welldone
-	sta $00
-	lda #>welldone
-	sta $01
-	jsr doEnqueueTextMessage
-	lda #<msg_press_start
-	sta $00
-	lda #>msg_press_start
-	sta $01
-	jsr doEnqueueTextMessage
 @return:
 	rts
 @died_return:
@@ -253,6 +254,20 @@ updateGameState:
 	lda #<msg_try_again
 	sta $00
 	lda #>msg_try_again
+	sta $01
+	jsr doEnqueueTextMessage
+	rts
+@victory_return:
+	lda #GameStateVictory
+	sta GAME_STATE
+	lda #<welldone
+	sta $00
+	lda #>welldone
+	sta $01
+	jsr doEnqueueTextMessage
+	lda #<msg_press_start
+	sta $00
+	lda #>msg_press_start
 	sta $01
 	jsr doEnqueueTextMessage
 	rts
