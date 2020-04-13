@@ -17,18 +17,29 @@ doLoadStage:
 	; CONSUME THE BACKGROUND TILES
 	lda (STAGE_ADDR),y
 	tax
-@nextField:
+	
+:
 	jsr consumeMapCoordinates
-
 	lda #BLOCK_SPRITE_F1
 	sta PPU_BUF_VAL
 	jsr writeBackgroundBlock
-
 	dex
-	bne @nextField
+	bne :-
 
 	; CONSUME THE DEATH TILES
 	iny
+	lda (STAGE_ADDR),y
+	beq @noDeadTiles
+	tax
+
+:
+	jsr consumeMapCoordinates
+	lda #BLOCK_SPRITE_F3
+	sta PPU_BUF_VAL
+	jsr writeBackgroundBlock
+	dex
+	bne :-
+@noDeadTiles:
 
 	; CONSUME THE CHARACTERS STARTING POSITIONS
 	iny
@@ -137,6 +148,16 @@ stageTileType:
 	iny
 
 	; test for killing tiles
+	lda (STAGE_ADDR),y ; read the length
+	tax
+	; consume "x" bytes
+	beq @noDeath
+:
+	iny
+	dex
+	bne :-
+@noDeath:
+
 	iny
 
 	; skip character starting positions
@@ -159,12 +180,34 @@ stageTileType:
 	rts
 
 stagesLookUpTable:
+	.addr map0
 	.addr map1
 	.addr map2
 	.addr map3
 
 numberOfStages:
-	.byte $03
+	.byte $04
+
+map0:
+; Encoded first map of the game, for testing purposes
+; First, the coordinates of the "walkable area"
+; How many, then y and x compressed in a single byte
+.byte $05
+.byte $44
+.byte $45
+.byte $74
+.byte $75
+.byte $76
+; Now the coordinates of the "dead area"
+; How many, then y and x compressed in a single byte
+.byte $01
+.byte $85
+; Second, the start locations for the characters
+.byte $44
+.byte $74
+; Last, the exit locations
+.byte $45
+.byte $76
 
 map1:
 ; Encoded first map of the game, for testing purposes
