@@ -346,6 +346,9 @@ doProcessInput:
 	lda GAME_STATE
 	cmp #GameStatePlaying
 	bne :+
+	lda INPUT
+	and #DPAD_MASK
+	beq :+
 	jsr doMaybeMoveCharacters
 	jmp @done
 :
