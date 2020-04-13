@@ -1,3 +1,4 @@
+Metatile_Ground = $29
 
 doLoadStage:
 	jsr clearField
@@ -20,9 +21,9 @@ doLoadStage:
 	
 :
 	jsr consumeMapCoordinates
-	lda #BLOCK_SPRITE_F1
+	lda #Metatile_Ground
 	sta PPU_BUF_VAL
-	jsr writeBackgroundBlock
+	jsr writeMetatile
 	dex
 	bne :-
 
@@ -91,6 +92,34 @@ consumeMapCoordinates:
 	asl
 	ora 0
 	sta PPU_BUF_LO
+	rts
+
+writeMetatile:
+	lda PPU_BUF_HI
+	sta PPUADDR
+	lda PPU_BUF_LO
+	sta PPUADDR
+	lda PPU_BUF_VAL
+	inc PPU_BUF_VAL
+	sta PPUDATA
+	lda PPU_BUF_VAL
+	inc PPU_BUF_VAL
+	sta PPUDATA
+	clc
+	lda PPU_BUF_LO
+	adc #$20
+	lda #$00
+	adc PPU_BUF_HI
+	sta PPUADDR
+	lda PPU_BUF_LO
+	adc #$20
+	sta PPUADDR
+	lda PPU_BUF_VAL
+	inc PPU_BUF_VAL
+	sta PPUDATA
+	lda PPU_BUF_VAL
+	inc PPU_BUF_VAL
+	sta PPUDATA
 	rts
 
 writeBackgroundBlock:
