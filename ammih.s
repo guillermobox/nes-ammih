@@ -76,8 +76,8 @@ nmi:
 	jsr doProcessInput
 	jsr doTriggerAudio
 	jsr updatePlayerSprites
-	jsr updateGameState
 	jsr updateHUD
+	jsr updateGameState
 
 	lda GAME_STATE
 	cmp #GameStateLoading
