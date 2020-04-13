@@ -154,6 +154,9 @@ stageTileType:
 	beq @noDeath
 :
 	iny
+	lda (STAGE_ADDR),y
+	cmp $31
+	beq @found_death_tile
 	dex
 	bne :-
 @noDeath:
@@ -178,6 +181,9 @@ stageTileType:
 @found_exit_tile:
 	lda #$02
 	rts
+@found_death_tile:
+	lda #$04
+	rts
 
 stagesLookUpTable:
 	.addr map0
@@ -192,12 +198,13 @@ map0:
 ; Encoded first map of the game, for testing purposes
 ; First, the coordinates of the "walkable area"
 ; How many, then y and x compressed in a single byte
-.byte $05
+.byte $06
 .byte $44
 .byte $45
 .byte $74
 .byte $75
 .byte $76
+.byte $85
 ; Now the coordinates of the "dead area"
 ; How many, then y and x compressed in a single byte
 .byte $01
