@@ -32,6 +32,7 @@ PRESSED      = $0301
 BULK_UPDATE  = $0302
 ACTIVE_STAGE = $0303
 GAME_STATE   = $0306
+BULK_LOAD    = $0307
 
 PPU_ENCODED     = $0400
 PPU_ENCODED_LEN = $04FF
@@ -49,6 +50,7 @@ GameStateVictory = $02
 GameStateEndScreen = $03
 GameStateIdle = $04
 GameStateFailure = $05
+GameStateTitleScreen = $06
 
 DPAD_MASK       = DPAD_UP | DPAD_DOWN | DPAD_LEFT | DPAD_RIGHT
 DPAD_UP         = %00001000
@@ -114,6 +116,46 @@ nmi:
 @stageIsAlreadyLoaded:
 
 	lda GAME_STATE
+	cmp #GameStateTitleScreen
+	bne @notInTitleScreen
+
+	lda BULK_LOAD
+	beq @notInTitleScreen
+
+	; disable rendering
+	ldx #0
+	stx PPUMASK
+	; disable nmi
+	lda #%00100000
+	sta PPUCONTROL
+	; load the stage
+
+	jsr showTitleScreen
+
+	; wait for the next blank
+	lda #$20
+	sta PPUADDR
+	lda #$00
+	sta PPUADDR
+:
+	bit PPUSTATUS
+	bpl :-
+	; enable rendering
+	lda #$0e
+	sta PPUMASK
+	; enable nmi
+	lda #%10100000
+	sta PPUCONTROL
+
+	lda #$20
+	sta PPUADDR
+	lda #$00
+	sta PPUADDR
+	sta BULK_LOAD
+@notInTitleScreen:
+
+
+	lda GAME_STATE
 	cmp #GameStateEndScreen
 	bne @notInEndScreen
 	; disable rendering
@@ -149,6 +191,31 @@ nmi:
 
 	rti
 
+showTitleScreen:
+	jsr clearField
+	lda #<msg
+	sta $00
+	lda #>msg
+	sta $01
+	jsr doEnqueueTextMessage
+	lda #<msg_title
+	sta $00
+	lda #>msg_title
+	sta $01
+	jsr doEnqueueTextMessage
+	lda #<msg_title2
+	sta $00
+	lda #>msg_title2
+	sta $01
+	jsr doEnqueueTextMessage
+	lda #<msg_start
+	sta $00
+	lda #>msg_start
+	sta $01
+	jsr doEnqueueTextMessage
+	rts
+	
+
 ; PPU encoded instructions are, per byte:
 ;   - number of characters (N)
 ;   - ppuaddress: high, low
@@ -183,6 +250,9 @@ doConsumePPUEncoded:
 	rts
 
 updateHUD:
+	lda GAME_STATE
+	cmp #GameStatePlaying
+	bne @return
 	lda #$20
 	sta $00
 	lda #$8D
@@ -190,6 +260,7 @@ updateHUD:
 	lda STEPS_TAKEN
 	sta $02
 	jsr enqueueNumber
+@return:
 	rts
 
 ; consume the address from 00 (high) 01 (low) and the value from 02
@@ -284,11 +355,6 @@ updateGameState:
 
 clearField:
 	jsr initializeNametables
-	lda #<msg
-	sta $00
-	lda #>msg
-	sta $01
-	jsr doEnqueueTextMessage
 	rts
 
 doShowEndScreen:
@@ -309,6 +375,12 @@ doShowEndScreen:
 	lda #<congrats3
 	sta $00
 	lda #>congrats3
+	sta $01
+	jsr doEnqueueTextMessage
+
+	lda #<msg_start
+	sta $00
+	lda #>msg_start
 	sta $01
 	jsr doEnqueueTextMessage
 
@@ -362,10 +434,34 @@ doProcessInput:
 	jsr doMaybeMenu
 	jmp @done
 :
+	cmp #GameStateTitleScreen
+	bne :+
+	jsr doMaybeMenu
+	jmp @done
+:
+	cmp #GameStateIdle
+	bne :+
+	jsr doMaybeRestart
+	jmp @done
+:
 @done:
 	lda #1
 	sta PRESSED
 @finishedInput:
+	rts
+
+doMaybeRestart:
+	lda INPUT
+	and #CTRL_START
+	beq :+
+	lda #$00
+	sta ACTIVE_STAGE
+	sta STEPS_TAKEN
+	lda #$01
+	sta BULK_LOAD
+	lda #GameStateTitleScreen
+	sta GAME_STATE
+:
 	rts
 
 doMaybeMenu:
@@ -378,6 +474,8 @@ doMaybeMenu:
 		; go to next stage then
 		lda GAME_STATE
 		cmp #GameStateFailure
+		beq @toNextStage
+		cmp #GameStateTitleScreen
 		beq @toNextStage
 		inc ACTIVE_STAGE
 		lda ACTIVE_STAGE
@@ -626,7 +724,10 @@ reset:
 	sta PPUCONTROL
 
 	lda #GameStateLoading
+	lda #GameStateTitleScreen
 	sta GAME_STATE
+	lda #1
+	sta BULK_LOAD
 	lda #0
 	sta ACTIVE_STAGE
 BusyLoop:
