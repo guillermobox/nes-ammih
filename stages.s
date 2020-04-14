@@ -68,6 +68,11 @@ doLoadStage:
 	sta PPU_BUF_VAL
 	jsr writeMetatile
 
+	; CONSUME THE STEPS
+	iny
+	lda (STAGE_ADDR),y
+	sta STAGE_STEPS
+
 	rts
 
 consumeMapCoordinates:
@@ -253,6 +258,8 @@ map1:
 ; Last, the exit locations
 .byte $45
 .byte $76
+; Last-last, the ammount of steps required
+.byte $02
 map2:
 ; Encoded second map that requires a little more thinking
 .byte $07
@@ -269,6 +276,8 @@ map2:
 ; Second, the start locations for the characters
 .byte $45, $48
 .byte $55, $68
+; Last-last, the ammount of steps required
+.byte $05
 map3:
 ; Encoded third map that requires a little more thinking
 .byte $12
@@ -296,6 +305,8 @@ map3:
 ; Second, the start locations for the characters
 .byte $56, $7a
 .byte $56, $6c
+; Last-last, the ammount of steps required
+.byte $06
 map4:
 ; How many, then y and x compressed in a single byte
 .byte 15
@@ -327,5 +338,7 @@ map4:
 ; Last, the exit locations
 .byte $63
 .byte $78
+; Last-last, the ammount of steps required
+.byte $06
 
 

@@ -28,6 +28,7 @@ P2_NEXT_COOR = $0203
 STEPS_TAKEN  = $0204
 STAGE_EXIT_1 = $0205
 STAGE_EXIT_2 = $0206
+STAGE_STEPS  = $0207
 
 INPUT        = $0300
 PRESSED      = $0301
@@ -93,7 +94,7 @@ nmi:
 	sta PPUCONTROL
 	; load the stage
 	jsr doLoadStage
-	lda #$00
+	lda STAGE_STEPS
 	sta STEPS_TAKEN
 	; wait for the next blank
 	lda #$20
@@ -299,7 +300,9 @@ enqueueNumber:
 updateGameState:
 	lda GAME_STATE
 	cmp #GameStatePlaying
-	bne @return
+	beq :+
+	rts
+:
 
 	lda P1_COOR
 	jsr stageTileType
@@ -326,7 +329,12 @@ updateGameState:
 	jmp @victory_return
 
 @return:
+	lda STEPS_TAKEN
+	bne :+
+	jmp @died_return
+:
 	rts
+
 @died_return:
 	lda #GameStateFailure
 	sta GAME_STATE
@@ -459,7 +467,6 @@ doMaybeRestart:
 	beq :+
 	lda #$00
 	sta ACTIVE_STAGE
-	sta STEPS_TAKEN
 	lda #$01
 	sta BULK_LOAD
 	lda #GameStateTitleScreen
@@ -591,17 +598,17 @@ doMaybeMoveCharacters:
 	ldx A_CHARACTER_MOVED
 	beq @nobodymoved
 	; BCD increment the variable steps taken
-	inc STEPS_TAKEN
+	dec STEPS_TAKEN
 	lda STEPS_TAKEN
 	and #$0f
 	cmp #$0a
 	bmi :+
-		inc STEPS_TAKEN
-		inc STEPS_TAKEN
-		inc STEPS_TAKEN
-		inc STEPS_TAKEN
-		inc STEPS_TAKEN
-		inc STEPS_TAKEN
+		dec STEPS_TAKEN
+		dec STEPS_TAKEN
+		dec STEPS_TAKEN
+		dec STEPS_TAKEN
+		dec STEPS_TAKEN
+		dec STEPS_TAKEN
 	:
 @nobodymoved:
 	rts
