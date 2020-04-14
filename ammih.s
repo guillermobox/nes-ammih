@@ -26,6 +26,8 @@ P2_COOR      = $0201
 P1_NEXT_COOR = $0202
 P2_NEXT_COOR = $0203
 STEPS_TAKEN  = $0204
+STAGE_EXIT_1 = $0205
+STAGE_EXIT_2 = $0206
 
 INPUT        = $0300
 PRESSED      = $0301
@@ -43,6 +45,7 @@ BLOCK_SPRITE_BG = $24
 BLOCK_SPRITE_F1 = $26
 BLOCK_SPRITE_F2 = $27
 BLOCK_SPRITE_F3 = $28
+BLOCK_CHARACTER = $30
 
 GameStateLoading = $00
 GameStatePlaying = $01
@@ -606,71 +609,78 @@ doMaybeMoveCharacters:
 doTriggerAudio:
 	rts
 
-updatePlayerSprites:
+; show metasprite at coordinates, use 'x' to pick what OAMADDR to use
+; sprite is found at $00
+; logical coordinates at $01 (single byte coordinate)
+; palette at $02
+writeMetasprite:
 	clc
-	lda P1_COOR
-	and #$f0
-	adc #$Fd
-	sta OAMADDR
-	lda P1_COOR
-	and #$0F
-	asl
-	asl
-	asl
-	asl
-	sta OAMADDR+3
-	lda #$30
-	sta OAMADDR+1
-
-	lda P1_COOR
-	and #$f0
-	adc #$Fd
-	sta OAMADDR+4
-	lda P1_COOR
-	and #$0F
-	asl
-	asl
-	asl
-	asl
-	clc
-	adc #8
-	sta OAMADDR+3+4
-	lda #$32
-	sta OAMADDR+1+4
-
-	lda P2_COOR
-	and #$f0
+	lda $01
+	and #$F0
 	adc #$FD
-	sta OAMADDR+8
-	lda #$01
-	sta OAMADDR+2+8
-	lda P2_COOR
-	and #$0f
+	sta OAMADDR,x
+	inx
+	lda $00
+	sta OAMADDR,x
+	inx
+	lda $02
+	sta OAMADDR,x
+	inx
+	lda $01
+	and #$0F
 	asl
 	asl
 	asl
 	asl
-	sta OAMADDR+3+8
-	lda #$30
-	sta OAMADDR+1+8
+	sta OAMADDR,x
+	inx
 
-	lda P2_COOR
-	and #$f0
-	adc #$fd
-	sta OAMADDR+4+8
-	lda #$01
-	sta OAMADDR+4+2+8
-	lda P2_COOR
-	and #$0f
+	lda $01
+	and #$F0
+	adc #$FD
+	sta OAMADDR,x
+	inx
+	inc $00
+	inc $00
+	lda $00
+	sta OAMADDR,x
+	inx
+	lda $02
+	sta OAMADDR,x
+	lda $01
+	and #$0F
 	asl
 	asl
 	asl
 	asl
 	clc
 	adc #8
-	sta OAMADDR+3+4+8
-	lda #$32
-	sta OAMADDR+1+4+8
+	inx
+	sta OAMADDR,x
+
+	inx
+	rts
+
+; form the actual player position, update the sprites to be in the corresponding
+; location in the screen
+updatePlayerSprites:
+	ldx #$00
+
+	lda #$30
+	sta $00
+	lda P1_COOR
+	sta $01
+	lda #$00
+	sta $02
+	jsr writeMetasprite
+
+	lda #$30
+	sta $00
+	lda P2_COOR
+	sta $01
+	lda #$01
+	sta $02
+	jsr writeMetasprite
 	rts
 
 reset:

@@ -53,10 +53,20 @@ doLoadStage:
 	; CONSUME THE CHARACTERS WINNING POSITIONS
 	lda #BLOCK_SPRITE_F2
 	sta PPU_BUF_VAL
+
 	jsr consumeMapCoordinates
-	jsr writeBackgroundBlock
+	lda (STAGE_ADDR),y
+	sta STAGE_EXIT_1
+	lda #$40
+	sta PPU_BUF_VAL
+	jsr writeMetatile
+
 	jsr consumeMapCoordinates
-	jsr writeBackgroundBlock
+	lda (STAGE_ADDR),y
+	sta STAGE_EXIT_2
+	lda #$40
+	sta PPU_BUF_VAL
+	jsr writeMetatile
 
 	rts
 
