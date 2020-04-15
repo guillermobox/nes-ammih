@@ -49,13 +49,12 @@ audioregs:
 initializeDmaTable:
 	ldx #0
 @next_sprite:
-	lda #0
+	lda #$ff
 	sta OAMADDR,x ; y position
 	inx
-	lda #BLOCK_SPRITE_BG
+	lda #0
 	sta OAMADDR,x ; sprite index
 	inx
-	lda #0
 	sta OAMADDR,x ; palette
 	inx
 	sta OAMADDR,x ; x position
