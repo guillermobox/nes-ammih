@@ -42,12 +42,6 @@ PPU_ENCODED_LEN = $04FF
 
 OAMADDR      = $0700
 
-BLOCK_SPRITE_BG = $24
-BLOCK_SPRITE_F1 = $26
-BLOCK_SPRITE_F2 = $27
-BLOCK_SPRITE_F3 = $28
-BLOCK_CHARACTER = $30
-
 GameStateLoading = $00
 GameStatePlaying = $01
 GameStateVictory = $02
@@ -62,6 +56,8 @@ DPAD_DOWN       = %00000100
 DPAD_LEFT       = %00000010
 DPAD_RIGHT      = %00000001
 CTRL_START      = %00010000
+
+.include "chr.s"
 
 .segment "CODE"
 nmi:
@@ -673,7 +669,7 @@ writeMetasprite:
 updatePlayerSprites:
 	ldx #$00
 
-	lda #$30
+	lda #METATILE_ROBOT
 	sta $00
 	lda P1_COOR
 	sta $01
@@ -681,7 +677,7 @@ updatePlayerSprites:
 	sta $02
 	jsr writeMetasprite
 
-	lda #$30
+	lda #METATILE_ROBOT
 	sta $00
 	lda P2_COOR
 	sta $01

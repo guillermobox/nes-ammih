@@ -1,6 +1,6 @@
 ; A nametable has 30 rows of 32 sprites each
 clearNametable:
-	lda #BLOCK_SPRITE_BG
+	lda #METATILE_SOLID
 	ldy #$1e
 @row:
 	ldx #$20

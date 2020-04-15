@@ -1,4 +1,4 @@
-import argparse
+import sys
 from pathlib import Path
 from PIL import Image
 
@@ -95,10 +95,11 @@ class Tileset:
         return cls(path.name.rstrip(path.suffix), tiles, column=modifier=='column')
 
 
-def main(config):
+def main():
+    paths = sys.argv[1:]
     tilesets = [
         Tileset.from_path(path)
-        for path in config.tiles
+        for path in paths
     ]
 
     chr = bytearray(8192)
@@ -107,7 +108,7 @@ def main(config):
     names = [f'METATILE_{tileset.name.upper()}' for tileset in tilesets]
     maxlen = max(len(name) for name in names)
 
-    with open(config.assembly, 'w') as fh:
+    with open('chr.s', 'w') as fh:
         for tileset, name in zip(tilesets, names):
             fh.write(f'{name.ljust(maxlen)} = ${offset >> 4:02x}\n')
             encoded = tileset.encode()
@@ -115,17 +116,8 @@ def main(config):
             chr[offset:offset+length] = encoded
             offset += length
 
-    Path(config.binary).write_bytes(chr)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Tiler assembles chr rom files from png tiles')
-    parser.add_argument('tiles', nargs='+', help='png files to assemble')
-    parser.add_argument('--binary', help='output file to write the chr binary')
-    parser.add_argument('--assembly', help='output addresses to this file')
-    return parser.parse_args()
+    Path('chr.bin').write_bytes(chr)
 
 
 if __name__ == '__main__':
-    config = parse_args()
-    main(config)
+    main()

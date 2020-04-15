@@ -1,5 +1,3 @@
-Metatile_Ground = $29
-
 doLoadStage:
 	jsr clearField
 
@@ -21,7 +19,7 @@ doLoadStage:
 	
 :
 	jsr consumeMapCoordinates
-	lda #Metatile_Ground
+	lda #METATILE_GROUND
 	sta PPU_BUF_VAL
 	jsr writeMetatile
 	dex
@@ -35,7 +33,7 @@ doLoadStage:
 
 :
 	jsr consumeMapCoordinates
-	lda #BLOCK_SPRITE_F3
+	lda #METATILE_SOLID + 3
 	sta PPU_BUF_VAL
 	jsr writeBackgroundBlock
 	dex
@@ -51,20 +49,17 @@ doLoadStage:
 	sta P2_COOR
 
 	; CONSUME THE CHARACTERS WINNING POSITIONS
-	lda #BLOCK_SPRITE_F2
-	sta PPU_BUF_VAL
-
 	jsr consumeMapCoordinates
 	lda (STAGE_ADDR),y
 	sta STAGE_EXIT_1
-	lda #$40
+	lda #METATILE_TERMINAL
 	sta PPU_BUF_VAL
 	jsr writeMetatile
 
 	jsr consumeMapCoordinates
 	lda (STAGE_ADDR),y
 	sta STAGE_EXIT_2
-	lda #$40
+	lda #METATILE_TERMINAL
 	sta PPU_BUF_VAL
 	jsr writeMetatile
 
