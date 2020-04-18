@@ -67,7 +67,7 @@ nmi:
 	; palette changes
 	lda #$3f
 	sta PPUADDR
-	lda #$06
+	lda #$05
 	sta PPUADDR
 
 	lda FRAME
