@@ -68,6 +68,14 @@ doLoadStage:
 	lda (STAGE_ADDR),y
 	sta STAGE_STEPS
 
+; input tile coordinates: x = 2 y = 2
+; PPU nametable address: 0x2042
+	lda #<msg_battery
+	sta $00
+	lda #>msg_battery
+	sta $01
+	jsr doEnqueueTextMessage
+
 	rts
 
 consumeMapCoordinates:

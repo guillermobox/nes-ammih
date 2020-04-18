@@ -71,6 +71,7 @@ initializeAttributeTable:
 	ldx #$40
 @nextAttributeByte:
 	sta PPUDATA
+	sta ATT_MIRROR,x
 	dex
 	bne @nextAttributeByte
 	rts
@@ -93,7 +94,7 @@ defaultPalette:
 	; the background values for sprites
 	; have priority because of mirroring
 	.byte $3f,$10,$20,$00 ; background 0
-	.byte $3f,$3f,$3f,$3f ; background 1
+	.byte $3f,$09,$1A,$29 ; background 1
 	.byte $3f,$3f,$3f,$3f ; background 2
 	.byte $3f,$3f,$3f,$3f ; background 3
 	.byte $3f,$05,$16,$30 ; sprite 0

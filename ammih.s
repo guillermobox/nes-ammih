@@ -29,6 +29,7 @@ STEPS_TAKEN  = $0204
 STAGE_EXIT_1 = $0205
 STAGE_EXIT_2 = $0206
 STAGE_STEPS  = $0207
+FRAME = $0100
 
 INPUT        = $0300
 PRESSED      = $0301
@@ -40,6 +41,7 @@ BULK_LOAD    = $0307
 PPU_ENCODED     = $0400
 PPU_ENCODED_LEN = $04FF
 
+ATT_MIRROR   = $06C0
 OAMADDR      = $0700
 
 GameStateLoading = $00
@@ -61,6 +63,7 @@ CTRL_START      = %00010000
 
 .segment "CODE"
 nmi:
+	inc FRAME
 	jsr doConsumePPUEncoded
 
 	; enqueue DMA transfer to OAM
@@ -252,16 +255,99 @@ doConsumePPUEncoded:
 updateHUD:
 	lda GAME_STATE
 	cmp #GameStatePlaying
-	bne @return
-	lda #$20
-	sta $00
-	lda #$8D
-	sta $01
-	lda STEPS_TAKEN
-	sta $02
-	jsr enqueueNumber
-@return:
+	beq :+
 	rts
+	:
+
+	jsr updateBattery
+	rts
+
+updateBattery:
+;	ldx #$01
+;	ldy #$01
+;
+;	tya
+;	lsr
+;	lsr
+;	lsr
+;	ora #$20
+;	sta $00
+;
+;	txa
+;	sta $01
+;	tya
+;	and #$07
+;	asl
+;	asl
+;	asl
+;	asl
+;	asl
+;	ora $01
+;	sta $01
+
+	ldx PPU_ENCODED_LEN
+	lda #$08
+	sta PPU_ENCODED,x
+	inx
+; input tile coordinates: x = 2 y = 1
+; PPU nametable address: 0x2022
+	lda #$20
+	sta PPU_ENCODED,x
+	inx
+	lda #$22
+	sta PPU_ENCODED,x
+	inx
+	ldy #$00
+@next_battery_tile:
+	lda #METATILE_BATTERYFULL
+	cpy STEPS_TAKEN
+	bmi :+
+	lda #METATILE_SOLID
+	:
+	sta PPU_ENCODED,x
+	inx
+	iny
+	cpy #$08
+	bne @next_battery_tile
+	stx PPU_ENCODED_LEN
+
+	ldx #$02
+	ldy #$01
+
+	lda #$23
+	sta $00
+	txa
+	lsr
+	lsr
+	sta $01
+	tya
+	asl
+	and #%00111000
+	ora #$c0
+	ora $01
+	sta $01
+
+; ATT_MIRROR   = $06C0
+	ldx PPU_ENCODED_LEN
+	lda #$03
+	tay
+	sta PPU_ENCODED,x
+	inx
+	lda $00
+	sta PPU_ENCODED,x
+	inx
+	lda $01
+	sta PPU_ENCODED,x
+	inx
+@next_attribute_tile:
+	lda #$05
+	sta PPU_ENCODED,x
+	inx
+	dey
+	bne @next_attribute_tile
+	stx PPU_ENCODED_LEN
+	rts
+
 
 ; consume the address from 00 (high) 01 (low) and the value from 02
 enqueueNumber:
@@ -595,17 +681,6 @@ doMaybeMoveCharacters:
 	beq @nobodymoved
 	; BCD increment the variable steps taken
 	dec STEPS_TAKEN
-	lda STEPS_TAKEN
-	and #$0f
-	cmp #$0a
-	bmi :+
-		dec STEPS_TAKEN
-		dec STEPS_TAKEN
-		dec STEPS_TAKEN
-		dec STEPS_TAKEN
-		dec STEPS_TAKEN
-		dec STEPS_TAKEN
-	:
 @nobodymoved:
 	rts
 
