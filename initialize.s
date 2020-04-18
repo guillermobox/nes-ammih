@@ -97,8 +97,8 @@ defaultPalette:
 	.byte $3f,$09,$1A,$29 ; background 1
 	.byte $3f,$3f,$3f,$3f ; background 2
 	.byte $3f,$3f,$3f,$3f ; background 3
-	.byte $3f,$05,$16,$30 ; sprite 0
-	.byte $3f,$09,$1a,$30 ; sprite 1
+	.byte $3f,$15,$25,$3f ; sprite 0
+	.byte $3f,$1c,$2c,$3f ; sprite 1
 	.byte $3f,$3f,$3f,$3f ; sprite 2
 	.byte $3f,$3f,$3f,$3f ; sprite 3
 
