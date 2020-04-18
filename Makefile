@@ -14,4 +14,4 @@ prg.bin: ammih.s ammih.cfg initialize.s stages.s text.s
 	cl65 --config ammih.cfg ammih.s -o prg.bin
 
 chr.bin: tiles/*.png
-	python tiler.py tiles/font.png @solid tiles/robot.png@column tiles/terminal.png tiles/ground.png tiles/batteryfull.png
+	python tiler.py tiles/font.png @solid tiles/robot.png@column tiles/terminal.png tiles/ground.png tiles/batteryfull.png tiles/floor.png

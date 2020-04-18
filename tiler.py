@@ -57,8 +57,8 @@ class Tileset:
 
     @classmethod
     def guess_palette(cls, colors):
-        colors = [color for freq, color in colors]
-        return sorted(colors)
+        colors = [color for freq, color in colors if color != (0,0,0,0)]
+        return [(0,0,0,0)] + sorted(colors)
 
     @classmethod
     def from_path(cls, path):

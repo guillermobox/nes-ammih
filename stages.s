@@ -1,3 +1,41 @@
+; this is not used right now but will be soon
+writeFloor:
+	ldy #$0e + 1
+@nextRow:
+	dey
+	ldx #$0f + 1
+@nextTile:
+	dex
+	tya
+	lsr
+	lsr
+	ora #$20
+	sta PPU_BUF_HI
+
+	txa
+	asl
+	sta PPU_BUF_LO
+	tya
+	and #$03
+	asl
+	asl
+	asl
+	asl
+	asl
+	asl
+	ora PPU_BUF_LO
+	sta PPU_BUF_LO
+	lda #METATILE_FLOOR
+	sta PPU_BUF_VAL
+
+	jsr writeMetatile
+	cpx #$00
+	bne @nextTile
+	cpy #$02
+	bne @nextRow
+
+	rts
+
 doLoadStage:
 	jsr clearField
 
