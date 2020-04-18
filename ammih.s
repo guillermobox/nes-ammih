@@ -64,6 +64,24 @@ CTRL_START      = %00010000
 .segment "CODE"
 nmi:
 	inc FRAME
+	; palette changes
+	lda #$3f
+	sta PPUADDR
+	lda #$06
+	sta PPUADDR
+
+	lda FRAME
+	lsr
+	lsr
+	lsr
+	lsr
+	ldx #$19
+	and #$01
+	bne :+
+	ldx #$1A
+	:
+	stx PPUDATA
+
 	jsr doConsumePPUEncoded
 
 	; enqueue DMA transfer to OAM
