@@ -15,10 +15,10 @@ INPUT_CTRL_1 = $4016
 INPUT_CTRL_2 = $4017
 OAM_DMA      = $4014
 
-PPU_BUF_LO   = $0005
-PPU_BUF_HI   = $0006
-PPU_BUF_VAL  = $0007
-STAGE_ADDR   = $0009
+PPU_BUF_LO   = $0015
+PPU_BUF_HI   = $0016
+PPU_BUF_VAL  = $0017
+STAGE_ADDR   = $0019
 A_CHARACTER_MOVED = $0000
 
 P1_COOR      = $0200
@@ -281,27 +281,6 @@ updateHUD:
 	rts
 
 updateBattery:
-;	ldx #$01
-;	ldy #$01
-;
-;	tya
-;	lsr
-;	lsr
-;	lsr
-;	ora #$20
-;	sta $00
-;
-;	txa
-;	sta $01
-;	tya
-;	and #$07
-;	asl
-;	asl
-;	asl
-;	asl
-;	asl
-;	ora $01
-;	sta $01
 
 	ldx PPU_ENCODED_LEN
 	lda #$08

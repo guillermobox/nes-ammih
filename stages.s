@@ -1,3 +1,294 @@
+EMPTY     = METATILE_SOLID
+BORDER_UP = METATILE_BOX
+BORDER_DN = METATILE_BOX + 1
+BORDER_LE = METATILE_BOX + 2
+BORDER_RI = METATILE_BOX + 3
+BORDER_DL = METATILE_BOX + 4
+BORDER_UL = METATILE_BOX + 5
+BORDER_DR = METATILE_BOX + 6
+BORDER_UR = METATILE_BOX + 7
+
+tileCombinationTable:
+	.byte BORDER_UP,BORDER_DN,BORDER_UL,BORDER_UR
+	.byte BORDER_UP,BORDER_DN,BORDER_DL,BORDER_DR
+	.byte BORDER_UL,BORDER_DL,BORDER_LE,BORDER_RI
+	.byte BORDER_UR,BORDER_DR,BORDER_LE,BORDER_RI
+
+readTile:
+	jsr convertTilePPU
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda PPUDATA
+	lda PPUDATA
+	sta $04
+	rts
+
+; combine tiles at $04 (already set) and $05 (new tile)
+; and write the result at $05
+combineTile:
+	lda $04
+	; if this is outside, it can be safely written
+	cmp #METATILE_SOLID
+	bne :+
+		rts
+	:
+	; if this is not a border, do not write in there
+	cmp #METATILE_BOX
+	beq @yes
+	cmp #METATILE_BOX + 1
+	beq @yes
+	cmp #METATILE_BOX + 2
+	beq @yes
+	cmp #METATILE_BOX + 3
+	beq @yes
+	cmp #METATILE_BOX + 4
+	beq @yes
+	cmp #METATILE_BOX + 5
+	beq @yes
+	cmp #METATILE_BOX + 6
+	beq @yes
+	cmp #METATILE_BOX + 7
+	beq @yes
+	sta $05
+	rts
+@yes:
+	; if the new tile is a corner, ignore it, it's low precedence
+	lda $05
+	sec
+	sbc #METATILE_BOX
+	cmp #$04
+	bmi :+
+		lda $04
+		sta $05
+		rts
+	:
+	; if the old tile is a corner, overwrite it
+	lda $04
+	sec
+	sbc #METATILE_BOX
+	cmp #$04
+	bmi :+
+		rts
+	:
+	; otherwise, use the tile combination table
+	lda $05
+	sec
+	sbc #METATILE_BOX
+	asl
+	asl
+	tax
+
+	lda $04
+	sec
+	sbc #METATILE_BOX
+
+	tay
+	iny
+	dex
+:
+	inx
+	dey
+	bne :-
+
+
+	lda tileCombinationTable,x
+	sta $05
+	rts
+
+
+; write a box around a particular logical coordinate, set at y=$00 and x=$01
+WriteSingleBox:
+	; after writing the tile, get the logical coordinates and convert them
+	; to the tile coordinates (2xlogical)
+	asl $00
+	asl $01
+
+	dec $00
+	dec $01
+
+	jsr readTile
+	lda #BORDER_DR
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	inc $01
+	jsr readTile
+	lda #BORDER_UP
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	inc $01
+	jsr readTile
+	lda #BORDER_UP
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	inc $01
+	jsr readTile
+	lda #BORDER_DL
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	inc $00
+	jsr readTile
+	lda #BORDER_RI
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	inc $00
+	jsr readTile
+	lda #BORDER_RI
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	inc $00
+	jsr readTile
+	lda #BORDER_UL
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	dec $01
+	jsr readTile
+	lda #BORDER_DN
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	dec $01
+	jsr readTile
+	lda #BORDER_DN
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	dec $01
+	jsr readTile
+	lda #BORDER_UR
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	dec $00
+	jsr readTile
+	lda #BORDER_LE
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	dec $00
+	jsr readTile
+	lda #BORDER_LE
+	sta $05
+	jsr combineTile
+	lda $05
+	lda $02
+	sta PPUADDR
+	lda $03
+	sta PPUADDR
+	lda $05
+	sta PPUDATA
+
+	rts
+
+; CONVERT FROM TILE COORDINATES TO PPU COORDINATES
+; get y and x tile coorinates from $00 and $01
+; save the result in $02 (high) and $03 (low)
+convertTilePPU:
+	lda $00
+	lsr
+	lsr
+	lsr
+	ora #$20
+	sta $02
+
+	lda $01
+	sta $03
+	lda $00
+	and #$07
+	asl
+	asl
+	asl
+	asl
+	asl
+	ora $03
+	sta $03
+	rts
+
 ; this is not used right now but will be soon
 writeFloor:
 	ldy #$0e + 1
@@ -54,12 +345,38 @@ doLoadStage:
 	; CONSUME THE BACKGROUND TILES
 	lda (STAGE_ADDR),y
 	tax
-	
 :
 	jsr consumeMapCoordinates
 	lda #METATILE_GROUND
 	sta PPU_BUF_VAL
 	jsr writeMetatile
+
+	lda (STAGE_ADDR),y
+	and #$0F
+	sta $01
+	lda (STAGE_ADDR),y
+	lsr
+	lsr
+	lsr
+	lsr
+	sta $00
+
+	txa
+	pha
+	tya
+	pha
+
+	jsr WriteSingleBox
+
+	pla
+	tay
+	pla
+	tax
+
+	lda #METATILE_GROUND
+	sta PPU_BUF_VAL
+	jsr writeMetatile
+
 	dex
 	bne :-
 
