@@ -98,6 +98,12 @@ class Tileset:
                 palindex = section[f'color{i}']
                 if palindex.startswith('$'):
                     idx = int(palindex[1:], 16)
+                elif palindex.startswith('#'):
+                    r = int(palindex[1:3], 16)
+                    g = int(palindex[3:5], 16)
+                    b = int(palindex[5:7], 16)
+                    guess.append((r, g, b, 255))
+                    continue
                 else:
                     idx = int(palindex)
                 pal = palette[idx]
