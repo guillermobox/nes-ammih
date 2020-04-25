@@ -290,12 +290,12 @@ updateBattery:
 	lda #$08
 	sta PPU_ENCODED,x
 	inx
-; input tile coordinates: x = 2 y = 1
-; PPU nametable address: 0x2022
+; input tile coordinates: x = 2 y = 2
+; PPU nametable address: 0x2042
 	lda #$20
 	sta PPU_ENCODED,x
 	inx
-	lda #$22
+	lda #$42
 	sta PPU_ENCODED,x
 	inx
 	ldy #$00
@@ -313,7 +313,7 @@ updateBattery:
 	stx PPU_ENCODED_LEN
 
 	ldx #$02
-	ldy #$01
+	ldy #$02
 
 	lda #$23
 	sta $00
@@ -341,7 +341,7 @@ updateBattery:
 	sta PPU_ENCODED,x
 	inx
 @next_attribute_tile:
-	lda #$05
+	lda #$50
 	sta PPU_ENCODED,x
 	inx
 	dey

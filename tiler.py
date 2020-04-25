@@ -1,3 +1,4 @@
+import argparse
 import configparser
 import struct
 import sys
@@ -78,9 +79,32 @@ class Tileset:
             return b''.join(tile.encode() for tile in self.tiles)
 
     @classmethod
-    def guess_palette(cls, colors):
-        colors = [color for freq, color in colors if color != (0,0,0,0)]
-        return [(0,0,0,0)] + sorted(colors)
+    def guess_palette(cls, colors, section):
+        transparent = (0, 0, 0, 0)
+        colors = sorted([color for freq, color in colors if color != (0,0,0,0)])
+
+        guess = [transparent]
+
+        fixed_colors = False
+        for i in range(1, 4):
+            if f'color{i}' in section:
+                fixed_colors = True
+
+        if fixed_colors == True:
+            for i in range(1, 4):
+                if f'color{i}' not in section:
+                    guess.append(transparent)
+                    continue
+                palindex = section[f'color{i}']
+                if palindex.startswith('$'):
+                    idx = int(palindex[1:], 16)
+                else:
+                    idx = int(palindex)
+                pal = palette[idx]
+                guess.append((*pal, 255))
+        else:
+            guess.extend(colors)
+        return guess
 
     @classmethod
     def from_section(cls, section, workdir):
@@ -103,7 +127,8 @@ class Tileset:
         colors = img.getcolors()
         if len(colors) > 4:
             raise Exception(f"{path} has too many colors")
-        p = Tileset.guess_palette(colors)
+        p = Tileset.guess_palette(colors, section)
+
         suggested = []
 
         for color in p[1:]:
@@ -126,8 +151,13 @@ class Tileset:
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('configuration')
+    args = parser.parse_args()
+
     cfg = configparser.ConfigParser()
-    cfg.read(sys.argv[1])
+    cfg.read(args.configuration)
 
     tilesets = [
         Tileset.from_section(cfg[section], Path(sys.argv[1]).parent)

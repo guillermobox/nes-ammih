@@ -23,7 +23,7 @@ doEnqueueTextMessage:
 ; input tile coordinates: x = 2 y = 2
 ; PPU nametable address: 0x2042
 msg_battery:
-.byte $20, $42
+.byte $20, $62
 ; Encoded string produced by encode.c
 ; The string: "energy"
 .byte $0e,$17,$0e,$1b,$10,$22,$00
