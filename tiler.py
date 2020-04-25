@@ -1,8 +1,9 @@
+import struct
 import sys
 from pathlib import Path
 from PIL import Image
 
-mesenpalette = [
+mesenpalette = bytearray([
   0x66, 0x66, 0x66, 0x00, 0x2a, 0x88, 0x14, 0x12, 0xa7, 0x3b, 0x00, 0xa4,
   0x5c, 0x00, 0x7e, 0x6e, 0x00, 0x40, 0x6c, 0x06, 0x00, 0x56, 0x1d, 0x00,
   0x33, 0x35, 0x00, 0x0b, 0x48, 0x00, 0x00, 0x52, 0x00, 0x00, 0x4f, 0x08,
@@ -19,7 +20,9 @@ mesenpalette = [
   0xfb, 0xc2, 0xff, 0xfe, 0xc4, 0xea, 0xfe, 0xcc, 0xc5, 0xf7, 0xd8, 0xa5,
   0xe4, 0xe5, 0x94, 0xcf, 0xef, 0x96, 0xbd, 0xf4, 0xab, 0xb3, 0xf3, 0xcc,
   0xb5, 0xeb, 0xf2, 0xb8, 0xb8, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-  ]
+  ])
+palette = list(struct.iter_unpack('BBB', mesenpalette))
+
 
 class SolidTile:
     def __init__(self, value):
@@ -35,7 +38,6 @@ class SolidTile:
                 ans[i] = (ans[i] << 1 ) + left
                 ans[i + 8] = (ans[i + 8 ] << 1) +right
         return ans
-
 
 class Tile:
     def __init__(self, data, palette):
@@ -53,17 +55,18 @@ class Tile:
         for i in range(8):
             for j in range(8):
                 left = self.data[i + 8 * j] & 0x01
-                right = self.data[i + 8*j] >> 1
+                right = self.data[i + 8 * j] >> 1
                 ans[i] = (ans[i] << 1 ) + left
-                ans[i + 8] = (ans[i + 8 ] << 1) +right
+                ans[i + 8] = (ans[i + 8 ] << 1) + right
         return ans
 
 
 class Tileset:
-    def __init__(self, name, tiles, column=False):
+    def __init__(self, name, tiles, palette=None, column=False):
         self.name = name
         self.tiles = tiles
         self.column = column
+        self.palette = palette
 
     def encode(self):
         if self.column:
@@ -99,6 +102,13 @@ class Tileset:
         if len(colors) > 4:
             raise Exception(f"{path} has too many colors")
         p = Tileset.guess_palette(colors)
+        suggested = []
+
+        for color in p[1:]:
+            c = (color[0], color[1], color[2])
+            def dist(a,b):
+                return sum(abs(a[i]-b[i]) for i in range(3))
+            suggested.append(palette.index(sorted(palette, key=lambda col:dist(col,c))[0]))
 
         rows = img.height // 8
         cols = img.width // 8
@@ -110,7 +120,7 @@ class Tileset:
                 tile = img.crop(box)
                 tiles.append(Tile(tile.load(), p))
 
-        return cls(path.name.rstrip(path.suffix), tiles, column=modifier=='column')
+        return cls(path.name.rstrip(path.suffix), tiles, palette=suggested, column=modifier=='column')
 
 
 def main():
@@ -128,7 +138,11 @@ def main():
 
     with open('chr.s', 'w') as fh:
         for tileset, name in zip(tilesets, names):
-            fh.write(f'{name.ljust(maxlen)} = ${offset >> 4:02x}\n')
+            fh.write(f'{name.ljust(maxlen)} = ${offset >> 4:02x}')
+            if tileset.palette:
+                formatted_palette = ','.join(f'${p:02x}' for p in tileset.palette)
+                fh.write(f' ; palette: {formatted_palette}')
+            fh.write('\n')
             encoded = tileset.encode()
             length = len(encoded)
             chr[offset:offset+length] = encoded
