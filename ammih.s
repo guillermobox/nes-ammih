@@ -111,6 +111,7 @@ nmi:
 	sta PPUCONTROL
 	; load the stage
 	jsr doLoadStage
+	jsr updatePlayerSprites
 	lda STAGE_STEPS
 	sta STEPS_TAKEN
 	; wait for the next blank
@@ -121,6 +122,9 @@ nmi:
 @vblankwait:
 	bit PPUSTATUS
 	bpl @vblankwait
+	; enqueue DMA transfer to OAM
+	lda #>OAMADDR
+	sta OAM_DMA
 	; enable rendering
 	lda #$1e
 	sta PPUMASK
