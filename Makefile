@@ -2,10 +2,10 @@
 
 all: ammih.nes
 
-tools: assemble encode
+tools: assemble encode translate
 
 clean:
-	rm -f chr.s chr.bin prg.bin ammih.nes *.o assemble encode
+	rm -f chr.s chr.bin prg.bin ammih.nes *.o assemble encode translate
 
 ammih.nes: prg.bin chr.bin assemble
 	./assemble -p prg.bin -c chr.bin -o ammih.nes
