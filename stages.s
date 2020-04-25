@@ -462,9 +462,9 @@ doLoadStage:
 
 :
 	jsr consumeMapCoordinates
-	lda #METATILE_SOLID + 3
+	lda #METATILE_DEADLYGROUND
 	sta PPU_BUF_VAL
-	jsr writeBackgroundBlock
+	jsr writeMetatile
 	dex
 	bne :-
 @noDeadTiles:
