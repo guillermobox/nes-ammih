@@ -5,7 +5,7 @@ all: ammih.nes
 tools: assemble encode
 
 clean:
-	rm -f chr.bin prg.bin *.nes *.o assemble encode
+	rm -f chr.s chr.bin prg.bin ammih.nes *.o assemble encode
 
 ammih.nes: prg.bin chr.bin assemble
 	./assemble -p prg.bin -c chr.bin -o ammih.nes
