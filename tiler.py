@@ -1,3 +1,4 @@
+import configparser
 import struct
 import sys
 from pathlib import Path
@@ -82,11 +83,12 @@ class Tileset:
         return [(0,0,0,0)] + sorted(colors)
 
     @classmethod
-    def from_path(cls, path):
-        path, _, modifier = path.partition('@')
-
-        if modifier == 'solid' and path == '':
+    def from_section(cls, section, workdir):
+        if section.name == '@SOLID@':
             return cls('solid', [SolidTile(value) for value in range(4)])
+
+        path = str(workdir / section.name)
+        path, _, modifier = path.partition('@')
 
         path = Path(path)
         img = Image.open(path)
@@ -120,14 +122,16 @@ class Tileset:
                 tile = img.crop(box)
                 tiles.append(Tile(tile.load(), p))
 
-        return cls(path.name.rstrip(path.suffix), tiles, palette=suggested, column=modifier=='column')
+        return cls(path.name.rstrip(path.suffix), tiles, palette=suggested, column=section.get('order', 'row')=='column')
 
 
 def main():
-    paths = sys.argv[1:]
+    cfg = configparser.ConfigParser()
+    cfg.read(sys.argv[1])
+
     tilesets = [
-        Tileset.from_path(path)
-        for path in paths
+        Tileset.from_section(cfg[section], Path(sys.argv[1]).parent)
+        for section in cfg.sections()
     ]
 
     chr = bytearray(8192)

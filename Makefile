@@ -13,5 +13,5 @@ ammih.nes: prg.bin chr.bin assemble
 prg.bin: ammih.s ammih.cfg initialize.s stages.s text.s chr.s
 	cl65 --config ammih.cfg ammih.s -o prg.bin
 
-chr.s chr.bin: tiles/*.png
-	python tiler.py tiles/font.png @solid tiles/robot.png@column tiles/terminal.png tiles/ground.png tiles/batteryfull.png tiles/floor.png tiles/box.png tiles/deadlyground.png
+chr.s chr.bin: tiles/chr.conf tiles/*.png
+	python tiler.py tiles/chr.conf
