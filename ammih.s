@@ -445,6 +445,7 @@ updateGameState:
 
 clearField:
 	jsr initializeNametables
+	jsr initializeAttributeTable
 	rts
 
 doShowEndScreen:

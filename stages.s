@@ -14,6 +14,75 @@ tileCombinationTable:
 	.byte BORDER_UL,BORDER_DL,BORDER_LE,BORDER_RI
 	.byte BORDER_UR,BORDER_DR,BORDER_LE,BORDER_RI
 
+; in A the coordinates of the metatile
+writePaletteAtMetatile:
+	tax
+	lsr
+	lsr
+	and #%00111000
+	sta $00
+	txa
+	lsr
+	and #%00000111
+	ora $00
+	ora #$C0
+	sta $00
+
+	; read the palette value
+	lda #$23
+	sta PPUADDR
+	lda $00
+	sta PPUADDR
+	lda PPUDATA
+	lda PPUDATA
+	sta $01
+
+	; calculate the mask (at $02)
+	lda #$03
+	sta $02
+	lda #$01
+	sta $03
+
+	txa
+	lsr
+	lsr
+	lsr
+	lsr
+	and #%01
+	beq :+
+		asl $02
+		asl $02
+		asl $02
+		asl $02
+		asl $03
+		asl $03
+		asl $03
+		asl $03
+:
+	txa
+	and #$01
+	beq :+
+		asl $02
+		asl $02
+		asl $03
+		asl $03
+:
+	lda $02
+	eor #$FF
+	sta $02
+	lda $01
+	and $02
+	ora $03
+	sta $01
+	lda #$23
+	sta PPUADDR
+	lda $00
+	sta PPUADDR
+	lda $01
+	sta PPUDATA
+	rts
+
+
 readTile:
 	jsr convertTilePPU
 	lda $02
@@ -340,16 +409,12 @@ doLoadStage:
 	lda stagesLookUpTable,x
 	sta STAGE_ADDR+1
 
-	ldy #$0
-
 	; CONSUME THE BACKGROUND TILES
+	ldy #$0
 	lda (STAGE_ADDR),y
 	tax
 :
 	jsr consumeMapCoordinates
-	lda #METATILE_GROUND
-	sta PPU_BUF_VAL
-	jsr writeMetatile
 
 	lda (STAGE_ADDR),y
 	and #$0F
@@ -373,12 +438,21 @@ doLoadStage:
 	pla
 	tax
 
-	lda #METATILE_GROUND
-	sta PPU_BUF_VAL
-	jsr writeMetatile
-
 	dex
 	bne :-
+
+	; CONSUME THE BACKGROUND TILES
+	ldy #$0
+	lda (STAGE_ADDR),y
+	tax
+:
+	jsr consumeMapCoordinates
+	lda #METATILE_SOLID
+	sta PPU_BUF_VAL
+	jsr writeBackgroundBlock
+	dex
+	bne :-
+
 
 	; CONSUME THE DEATH TILES
 	iny
@@ -407,6 +481,7 @@ doLoadStage:
 	jsr consumeMapCoordinates
 	lda (STAGE_ADDR),y
 	sta STAGE_EXIT_1
+	jsr writePaletteAtMetatile
 	lda #METATILE_TERMINAL
 	sta PPU_BUF_VAL
 	jsr writeMetatile
@@ -414,6 +489,7 @@ doLoadStage:
 	jsr consumeMapCoordinates
 	lda (STAGE_ADDR),y
 	sta STAGE_EXIT_2
+	jsr writePaletteAtMetatile
 	lda #METATILE_TERMINAL
 	sta PPU_BUF_VAL
 	jsr writeMetatile
