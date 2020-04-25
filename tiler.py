@@ -118,7 +118,6 @@ class Tileset:
             return cls('solid', [SolidTile(value) for value in range(4)])
 
         path = str(workdir / section.name)
-        path, _, modifier = path.partition('@')
 
         path = Path(path)
         img = Image.open(path)
