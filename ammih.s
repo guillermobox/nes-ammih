@@ -44,12 +44,12 @@ PPU_ENCODED_LEN = $04FF
 ATT_MIRROR   = $06C0
 OAMADDR      = $0700
 
-GameStateLoading = $00
-GameStatePlaying = $01
-GameStateVictory = $02
-GameStateEndScreen = $03
-GameStateIdle = $04
-GameStateFailure = $05
+GameStateLoading     = $00
+GameStatePlaying     = $01
+GameStateVictory     = $02
+GameStateEndScreen   = $03
+GameStateIdle        = $04
+GameStateFailure     = $05
 GameStateTitleScreen = $06
 
 DPAD_MASK       = DPAD_UP | DPAD_DOWN | DPAD_LEFT | DPAD_RIGHT
@@ -57,7 +57,7 @@ DPAD_UP         = %00001000
 DPAD_DOWN       = %00000100
 DPAD_LEFT       = %00000010
 DPAD_RIGHT      = %00000001
-CTRL_START      = %00010000
+DPAD_START      = %00010000
 
 .include "chr.s"
 
@@ -547,7 +547,7 @@ doProcessInput:
 
 doMaybeRestart:
 	lda INPUT
-	and #CTRL_START
+	and #DPAD_START
 	beq :+
 	lda #$00
 	sta ACTIVE_STAGE
@@ -563,7 +563,7 @@ doMaybeMenu:
 	cmp #GameStateEndScreen
 	beq @notstart
 	lda INPUT
-	and #CTRL_START
+	and #DPAD_START
 	beq @notstart
 		; go to next stage then
 		lda GAME_STATE
