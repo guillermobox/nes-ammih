@@ -19,6 +19,7 @@ PPU_BUF_LO   = $0015
 PPU_BUF_HI   = $0016
 PPU_BUF_VAL  = $0017
 STAGE_ADDR   = $0019
+PPUMASK_BUF  = $0021
 A_CHARACTER_MOVED = $0000
 
 P1_COOR      = $0200
@@ -67,20 +68,14 @@ nmi:
 
 	lda BULK_LOAD
 	beq :+
-	jsr enterBulkLoadRoutine
-	rti
+		jsr enterBulkLoadRoutine
+		rti
 	:
 
 	jsr doConsumePPUEncoded
-
 	; enqueue DMA transfer to OAM
 	lda #>OAMADDR
 	sta OAM_DMA
-
-	lda #$20
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
 
 	; ppu critical phase finished
 	jsr doProcessInput
@@ -92,39 +87,33 @@ nmi:
 	rti
 
 enterBulkLoadRoutine:
-;	lda GAME_STATE
-;	cmp #GameStateLoading
-
-;	jsr doLoadStage
-;	jsr updatePlayerSprites
-;	lda STAGE_STEPS
-;	sta STEPS_TAKEN
-
-;	; enqueue DMA transfer to OAM
-;	lda #>OAMADDR
-;	sta OAM_DMA
-;	lda #GameStatePlaying
-;	sta GAME_STATE
-
 	; disable nmi and rendering
 	lda #%00100000
 	sta PPUCONTROL
 	lda #%00000000
 	sta PPUMASK
+	lda #%00001110
+	sta PPUMASK_BUF
 
-	; dispatch the proper long-run task
+; dispatch the proper long-run task
 	lda GAME_STATE
-	;jsr dispatchEngine
-
-;	GameStateLoading     = $00
-;	GameStatePlaying     = $01
-;	GameStateVictory     = $02
-;	GameStateEndScreen   = $03
-;	GameStateIdle        = $04
-;	GameStateFailure     = $05
-;	GameStateTitleScreen = $06
-
-	jsr bulkLoadTitleScreen
+	cmp #GameStateTitleScreen
+	bne :+
+		jsr bulkLoadTitleScreen
+		jmp @dispatchDone
+	:
+	cmp #GameStateLoading
+	bne :+
+		jsr bulkLoadStage
+		jmp @dispatchDone
+	:
+	cmp #GameStateEndScreen
+	bne :+
+		jsr bulkLoadEndScreen
+		jmp @dispatchDone
+	:
+	brk ; should never reach here
+@dispatchDone:
 
 	; wait for next frame before re-enabling rendering
 	: bit PPUSTATUS
@@ -133,7 +122,7 @@ enterBulkLoadRoutine:
 	; enable nmi and rendering
 	lda #%10100000
 	sta PPUCONTROL
-	lda #%00001110
+	lda PPUMASK_BUF
 	sta PPUMASK
 
 	; reset PPU ADDR to origin
@@ -148,41 +137,11 @@ enterBulkLoadRoutine:
 
 	rts
 
-;
-;	lda GAME_STATE
-;	cmp #GameStateEndScreen
-;	bne @notInEndScreen
-;	; disable rendering
-;	ldx #0
-;	stx PPUMASK
-;	; disable nmi
-;	lda #%00100000
-;	sta PPUCONTROL
-;	; load the stage
-;	jsr doShowEndScreen
-;	lda #GameStateIdle
-;	sta GAME_STATE
-;	; wait for the next blank
-;	lda #$20
-;	sta PPUADDR
-;	lda #$00
-;	sta PPUADDR
-;:
-;	bit PPUSTATUS
-;	bpl :-
-;	; enable rendering
-;	lda #$0e
-;	sta PPUMASK
-;	; enable nmi
-;	lda #%10100000
-;	sta PPUCONTROL
-;
-;	lda #$20
-;	sta PPUADDR
-;	lda #$00
-;	sta PPUADDR
-;@notInEndScreen:
-;
+bulkLoadEndScreen:
+	jsr doShowEndScreen
+	lda #GameStateIdle
+	sta GAME_STATE
+	rts
 
 
 bulkLoadTitleScreen:
@@ -209,6 +168,21 @@ bulkLoadTitleScreen:
 	jsr doEnqueueTextMessage
 	rts
 	
+bulkLoadStage:
+	jsr doLoadStage
+	jsr updatePlayerSprites
+	lda STAGE_STEPS
+	sta STEPS_TAKEN
+
+	; enqueue DMA transfer to OAM
+	lda #>OAMADDR
+	sta OAM_DMA
+	lda #GameStatePlaying
+	sta GAME_STATE
+	lda #%00011110
+	sta PPUMASK_BUF
+	rts
+
 
 ; PPU encoded instructions are, per byte:
 ;   - number of characters (N)
@@ -546,6 +520,8 @@ doMaybeMenu:
 		bne @toNextStage
 		lda #GameStateEndScreen
 		sta GAME_STATE
+		lda #1
+		sta BULK_LOAD
 		rts
 		@toNextStage:
 		lda #GameStateLoading
