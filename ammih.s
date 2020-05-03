@@ -64,6 +64,13 @@ DPAD_START      = %00010000
 .segment "CODE"
 nmi:
 	inc FRAME
+
+	lda BULK_LOAD
+	beq :+
+	jsr enterBulkLoadRoutine
+	rti
+	:
+
 	; palette changes
 	lda #$3f
 	sta PPUADDR
@@ -100,123 +107,103 @@ nmi:
 	jsr updateHUD
 	jsr updateGameState
 
-	lda GAME_STATE
-	cmp #GameStateLoading
-	bne @stageIsAlreadyLoaded
-	; disable rendering
-	ldx #0
-	stx PPUMASK
-	; disable nmi
-	lda #%00100000
-	sta PPUCONTROL
-	; load the stage
-	jsr doLoadStage
-	jsr updatePlayerSprites
-	lda STAGE_STEPS
-	sta STEPS_TAKEN
-	; wait for the next blank
-	lda #$20
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
-@vblankwait:
-	bit PPUSTATUS
-	bpl @vblankwait
-	; enqueue DMA transfer to OAM
-	lda #>OAMADDR
-	sta OAM_DMA
-	; enable rendering
-	lda #$1e
-	sta PPUMASK
-	; enable nmi
-	lda #%10100000
-	sta PPUCONTROL
-	lda #GameStatePlaying
-	sta GAME_STATE
-
-	lda #$20
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
-@stageIsAlreadyLoaded:
-
-	lda GAME_STATE
-	cmp #GameStateTitleScreen
-	bne @notInTitleScreen
-
-	lda BULK_LOAD
-	beq @notInTitleScreen
-
-	; disable rendering
-	ldx #0
-	stx PPUMASK
-	; disable nmi
-	lda #%00100000
-	sta PPUCONTROL
-	; load the stage
-
-	jsr showTitleScreen
-
-	; wait for the next blank
-	lda #$20
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
-:
-	bit PPUSTATUS
-	bpl :-
-	; enable rendering
-	lda #$0e
-	sta PPUMASK
-	; enable nmi
-	lda #%10100000
-	sta PPUCONTROL
-
-	lda #$20
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
-	sta BULK_LOAD
-@notInTitleScreen:
-
-
-	lda GAME_STATE
-	cmp #GameStateEndScreen
-	bne @notInEndScreen
-	; disable rendering
-	ldx #0
-	stx PPUMASK
-	; disable nmi
-	lda #%00100000
-	sta PPUCONTROL
-	; load the stage
-	jsr doShowEndScreen
-	lda #GameStateIdle
-	sta GAME_STATE
-	; wait for the next blank
-	lda #$20
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
-:
-	bit PPUSTATUS
-	bpl :-
-	; enable rendering
-	lda #$0e
-	sta PPUMASK
-	; enable nmi
-	lda #%10100000
-	sta PPUCONTROL
-
-	lda #$20
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
-@notInEndScreen:
-
 	rti
 
-showTitleScreen:
+enterBulkLoadRoutine:
+;	lda GAME_STATE
+;	cmp #GameStateLoading
+
+;	jsr doLoadStage
+;	jsr updatePlayerSprites
+;	lda STAGE_STEPS
+;	sta STEPS_TAKEN
+
+;	; enqueue DMA transfer to OAM
+;	lda #>OAMADDR
+;	sta OAM_DMA
+;	lda #GameStatePlaying
+;	sta GAME_STATE
+
+	; disable nmi and rendering
+	lda #%00100000
+	sta PPUCONTROL
+	lda #%00000000
+	sta PPUMASK
+
+	; dispatch the proper long-run task
+	lda GAME_STATE
+	;jsr dispatchEngine
+
+;	GameStateLoading     = $00
+;	GameStatePlaying     = $01
+;	GameStateVictory     = $02
+;	GameStateEndScreen   = $03
+;	GameStateIdle        = $04
+;	GameStateFailure     = $05
+;	GameStateTitleScreen = $06
+
+	jsr bulkLoadTitleScreen
+
+	; wait for next frame before re-enabling rendering
+	: bit PPUSTATUS
+	bpl :-
+
+	; enable nmi and rendering
+	lda #%10100000
+	sta PPUCONTROL
+	lda #%00001110
+	sta PPUMASK
+
+	; reset PPU ADDR to origin
+	lda #$20
+	sta PPUADDR
+	lda #$00
+	sta PPUADDR
+
+	; bulk load finished
+	lda #0
+	sta BULK_LOAD
+
+	rts
+
+;
+;	lda GAME_STATE
+;	cmp #GameStateEndScreen
+;	bne @notInEndScreen
+;	; disable rendering
+;	ldx #0
+;	stx PPUMASK
+;	; disable nmi
+;	lda #%00100000
+;	sta PPUCONTROL
+;	; load the stage
+;	jsr doShowEndScreen
+;	lda #GameStateIdle
+;	sta GAME_STATE
+;	; wait for the next blank
+;	lda #$20
+;	sta PPUADDR
+;	lda #$00
+;	sta PPUADDR
+;:
+;	bit PPUSTATUS
+;	bpl :-
+;	; enable rendering
+;	lda #$0e
+;	sta PPUMASK
+;	; enable nmi
+;	lda #%10100000
+;	sta PPUCONTROL
+;
+;	lda #$20
+;	sta PPUADDR
+;	lda #$00
+;	sta PPUADDR
+;@notInEndScreen:
+;
+
+
+bulkLoadTitleScreen:
 	jsr clearField
 	lda #<msg
 	sta $00
@@ -581,7 +568,8 @@ doMaybeMenu:
 		@toNextStage:
 		lda #GameStateLoading
 		sta GAME_STATE
-
+		lda #1
+		sta BULK_LOAD
 @notstart:
 	rts
 
@@ -813,13 +801,15 @@ reset:
 	ora #%10100000
 	sta PPUCONTROL
 
-	lda #GameStateLoading
+	; we kickstart the game loading the title screen
 	lda #GameStateTitleScreen
 	sta GAME_STATE
 	lda #1
 	sta BULK_LOAD
-	lda #0
-	sta ACTIVE_STAGE
+
+;	lda #0
+;	sta ACTIVE_STAGE
+
 BusyLoop:
 	jmp BusyLoop
 
