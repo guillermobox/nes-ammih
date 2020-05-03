@@ -71,24 +71,6 @@ nmi:
 	rti
 	:
 
-	; palette changes
-	lda #$3f
-	sta PPUADDR
-	lda #$05
-	sta PPUADDR
-
-	lda FRAME
-	lsr
-	lsr
-	lsr
-	lsr
-	ldx #$19
-	and #$01
-	bne :+
-	ldx #$1A
-	:
-	stx PPUDATA
-
 	jsr doConsumePPUEncoded
 
 	; enqueue DMA transfer to OAM
