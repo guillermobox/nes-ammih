@@ -726,9 +726,8 @@ reset:
 	; does not exit immediately.
 	bit PPUSTATUS
 
-@vblankwait1:
-	bit PPUSTATUS
-	bpl @vblankwait1
+:	bit PPUSTATUS
+	bpl :-
 
 	txa
 @clrmem:
@@ -743,9 +742,8 @@ reset:
 	inx
 	bne @clrmem
 
-@vblankwait2:
-	bit PPUSTATUS
-	bpl @vblankwait2
+:	bit PPUSTATUS
+	bpl :-
 
 	jsr initializeNametables
 	jsr initializeApu
@@ -767,8 +765,7 @@ reset:
 	lda #0
 	sta ACTIVE_STAGE
 
-BusyLoop:
-	jmp BusyLoop
+@BusyLoop: jmp @BusyLoop
 
 .include "text.s"
 .include "stages.s"
