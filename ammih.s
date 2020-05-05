@@ -45,12 +45,11 @@ PPU_ENCODED_LEN = $04FF
 ATT_MIRROR   = $06C0
 OAMADDR      = $0700
 
-GameStateLoading     = $00
-GameStatePlaying     = $01
-GameStateVictory     = $02
-GameStateEndScreen   = $03
-GameStateFailure     = $04
-GameStateTitleScreen = $05
+GameStatePlaying     = $00
+GameStateVictory     = $01
+GameStateEndScreen   = $02
+GameStateFailure     = $03
+GameStateTitleScreen = $04
 
 DPAD_MASK       = DPAD_UP | DPAD_DOWN | DPAD_LEFT | DPAD_RIGHT
 DPAD_UP         = %00001000
@@ -101,7 +100,7 @@ enterBulkLoadRoutine:
 		jsr bulkLoadTitleScreen
 		jmp @dispatchDone
 	:
-	cmp #GameStateLoading
+	cmp #GameStatePlaying
 	bne :+
 		jsr bulkLoadStage
 		jmp @dispatchDone
@@ -321,6 +320,10 @@ enqueueNumber:
 
 ; uses zero page $00, $01
 updateGameState:
+	lda BULK_LOAD
+	beq :+
+	rts
+:
 	lda GAME_STATE
 	cmp #GameStatePlaying
 	beq :+

@@ -32,7 +32,6 @@ doProcessInput:
 	; we dispatch depending on the game state
 	lda GAME_STATE
 	jsr dispatchEngine
-	.addr doNothing
 	.addr handleInputPlaying
 	.addr handleInputVictory
 	.addr handleInputEndScreen
@@ -60,7 +59,7 @@ handleInputTitleScreen:
 		sta ACTIVE_STAGE
 		lda #1
 		sta BULK_LOAD
-		lda #GameStateLoading
+		lda #GameStatePlaying
 		sta GAME_STATE
 @return:
 	rts
@@ -71,7 +70,7 @@ handleInputFailure:
 	beq @return
 		lda #1
 		sta BULK_LOAD
-		lda #GameStateLoading
+		lda #GameStatePlaying
 		sta GAME_STATE
 @return:
 	rts
@@ -90,7 +89,7 @@ handleInputVictory:
 		sta BULK_LOAD
 		rts
 		@toNextStage:
-		lda #GameStateLoading
+		lda #GameStatePlaying
 		sta GAME_STATE
 		lda #1
 		sta BULK_LOAD
