@@ -764,9 +764,8 @@ reset:
 	sta GAME_STATE
 	lda #1
 	sta BULK_LOAD
-
-;	lda #0
-;	sta ACTIVE_STAGE
+	lda #0
+	sta ACTIVE_STAGE
 
 BusyLoop:
 	jmp BusyLoop
