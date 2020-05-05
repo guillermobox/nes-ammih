@@ -10,7 +10,7 @@ clean:
 ammih.nes: prg.bin chr.bin assemble
 	./assemble -p prg.bin -c chr.bin -o ammih.nes
 
-prg.bin: ammih.s ammih.cfg initialize.s stages.s text.s chr.s
+prg.bin: ammih.s ammih.cfg initialize.s stages.s text.s chr.s input.s
 	cl65 --config ammih.cfg ammih.s -o prg.bin
 
 chr.s chr.bin: tiles/chr.conf tiles/*.png

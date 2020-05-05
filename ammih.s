@@ -49,9 +49,8 @@ GameStateLoading     = $00
 GameStatePlaying     = $01
 GameStateVictory     = $02
 GameStateEndScreen   = $03
-GameStateIdle        = $04
-GameStateFailure     = $05
-GameStateTitleScreen = $06
+GameStateFailure     = $04
+GameStateTitleScreen = $05
 
 DPAD_MASK       = DPAD_UP | DPAD_DOWN | DPAD_LEFT | DPAD_RIGHT
 DPAD_UP         = %00001000
@@ -139,8 +138,6 @@ enterBulkLoadRoutine:
 
 bulkLoadEndScreen:
 	jsr doShowEndScreen
-	lda #GameStateIdle
-	sta GAME_STATE
 	rts
 
 
@@ -424,48 +421,6 @@ doShowEndScreen:
 
 	rts
 
-doProcessInput:
-	lda #$00
-	sta INPUT
-
-	lda #$01
-	sta INPUT_CTRL_1
-	lda #$00
-	sta INPUT_CTRL_1
-
-	ldx #$08
-@nextInput:
-	lda INPUT_CTRL_1
-	lsr a
-	rol INPUT
-	dex
-	bne @nextInput
-
-	lda INPUT
-	bne @newInput
-	lda #0
-	sta PRESSED
-	rts
-@newInput:
-
-	lda PRESSED
-	beq @dispatchInput
-	rts
-@dispatchInput:
-
-	lda #1
-	sta PRESSED
-	; we dispatch depending on the game state
-	lda GAME_STATE
-	jsr dispatchEngine
-	.addr doNothing
-	.addr handleInputPlaying
-	.addr handleInputVictory
-	.addr doNothing
-	.addr handleInputEndScreen
-	.addr handleInputFailure
-	.addr handleInputTitleScreen
-
 doNothing:
 	brk
 	rts
@@ -498,170 +453,6 @@ dispatchEngine:
 	lda ($00),y
 	sta $03
 	jmp ($0002)
-
-handleInputEndScreen:
-	lda INPUT
-	and #DPAD_START
-	beq @return
-		lda #$00
-		sta ACTIVE_STAGE
-		lda #$01
-		sta BULK_LOAD
-		lda #GameStateTitleScreen
-		sta GAME_STATE
-@return:
-	rts
-
-handleInputTitleScreen:
-	lda INPUT
-	and #DPAD_START
-	beq @return
-		lda #$00
-		sta ACTIVE_STAGE
-		lda #1
-		sta BULK_LOAD
-		lda #GameStateLoading
-		sta GAME_STATE
-@return:
-	rts
-
-handleInputFailure:
-	lda INPUT
-	and #DPAD_START
-	beq @return
-		lda #1
-		sta BULK_LOAD
-		lda #GameStateLoading
-		sta GAME_STATE
-@return:
-	rts
-
-handleInputVictory:
-	lda INPUT
-	and #DPAD_START
-	beq @return
-		inc ACTIVE_STAGE
-		lda ACTIVE_STAGE
-		cmp numberOfStages
-		bne @toNextStage
-		lda #GameStateEndScreen
-		sta GAME_STATE
-		lda #1
-		sta BULK_LOAD
-		rts
-		@toNextStage:
-		lda #GameStateLoading
-		sta GAME_STATE
-		lda #1
-		sta BULK_LOAD
-@return:
-	rts
-
-handleInputPlaying:
-	lda INPUT
-	and #DPAD_MASK
-	bne :+
-	rts
-	:
-	; calculate destination coordinates
-	lda P1_COOR
-	sta P1_NEXT_COOR
-	lda P2_COOR
-	sta P2_NEXT_COOR
-
-	lda INPUT
-	and #DPAD_LEFT
-	beq @notleft
-	dec P1_NEXT_COOR
-	dec P2_NEXT_COOR
-	jmp @calculated
-@notleft:
-	lda INPUT
-	and #DPAD_RIGHT
-	beq @notright
-	inc P1_NEXT_COOR
-	inc P2_NEXT_COOR
-	jmp @calculated
-@notright:
-	lda INPUT
-	and #DPAD_UP
-	beq @notup
-
-	clc
-	lda P1_COOR
-	adc #$f0
-	and #$f0
-	sta 0
-	lda P1_COOR
-	and #$0f
-	ora 0
-	sta P1_NEXT_COOR
-
-	clc
-	lda P2_COOR
-	adc #$f0
-	and #$f0
-	sta 0
-	lda P2_COOR
-	and #$0f
-	ora 0
-	sta P2_NEXT_COOR
-
-	jmp @calculated
-@notup:
-	lda INPUT
-	and #DPAD_DOWN
-	beq @notdown
-
-	clc
-	lda P1_COOR
-	adc #$10
-	and #$f0
-	sta 0
-	lda P1_COOR
-	and #$0f
-	ora 0
-	sta P1_NEXT_COOR
-
-	clc
-	lda P2_COOR
-	adc #$10
-	and #$f0
-	sta 0
-	lda P2_COOR
-	and #$0f
-	ora 0
-	sta P2_NEXT_COOR
-
-	jmp @calculated
-@notdown:
-@calculated:
-	; now that I have the possible new coordinates,
-	; move the characters if they can
-
-	lda #$00
-	sta A_CHARACTER_MOVED
-	lda P1_NEXT_COOR
-	jsr stageTileType
-	beq :+ ; a tileType 0 is not walkable
-		lda P1_NEXT_COOR
-		sta P1_COOR
-		inc A_CHARACTER_MOVED
-	:
-	lda P2_NEXT_COOR
-	jsr stageTileType
-	beq :+ ; a tileType 0 is not walkable
-		lda P2_NEXT_COOR
-		sta P2_COOR
-		inc A_CHARACTER_MOVED
-	:
-
-	ldx A_CHARACTER_MOVED
-	beq @nobodymoved
-	; BCD increment the variable steps taken
-	dec STEPS_TAKEN
-@nobodymoved:
-	rts
 
 doTriggerAudio:
 	rts
@@ -800,6 +591,7 @@ reset:
 
 .include "text.s"
 .include "stages.s"
+.include "input.s"
 .include "initialize.s"
 
 .segment "VECTORS"
