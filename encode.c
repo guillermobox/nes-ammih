@@ -7,7 +7,7 @@ void validate_string(char *input)
 	int c;
 	while (*input) {
 		c = tolower(*input++);
-		if (c == ' ' || isalpha(c))
+		if (c == ' ' || isalpha(c) || isdigit(c))
 			continue;
 		printf("Character: '%c' (%d) is not supported\n", c, c);
 		exit(1);
@@ -41,6 +41,8 @@ int main(int argc, char *argv)
 			val = 0x24;
 		else if (isalpha(*input))
 			val = (tolower(*input) - 'a') + 0x0a;
+		else if (isdigit(*input))
+			val = ((*input) - '0');
 		printf("$%02x,", val);
 		input++;
 	};
