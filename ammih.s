@@ -1,6 +1,7 @@
 PPUCONTROL   = $2000
 PPUMASK      = $2001
 PPUSTATUS    = $2002
+PPUSCROLL    = $2005
 PPUADDR      = $2006
 PPUDATA      = $2007
 APU_ADDR     = $4000
@@ -124,13 +125,10 @@ enterBulkLoadRoutine:
 	sta PPUMASK
 
 	; reset PPU ADDR to origin
-	lda #$20
-	sta PPUADDR
-	lda #$00
-	sta PPUADDR
-
-	; bulk load finished
 	lda #0
+	sta PPUSCROLL
+	sta PPUSCROLL
+	; bulk load finished
 	sta BULK_LOAD
 
 	rts
@@ -205,11 +203,9 @@ doConsumePPUEncoded:
 	inx
 	jmp @nextrow
 @done:
-	lda #$20
-	sta PPUADDR
 	lda #$00
-	sta PPUADDR
-	sta PPU_ENCODED
+	sta PPUSCROLL
+	sta PPUSCROLL
 	sta PPU_ENCODED_LEN
 	rts
 
@@ -468,7 +464,7 @@ writeMetasprite:
 	clc
 	lda $01
 	and #$F0
-	adc #$FD
+	adc #$FF
 	sta OAMADDR,x
 	inx
 	lda $00
@@ -488,7 +484,7 @@ writeMetasprite:
 
 	lda $01
 	and #$F0
-	adc #$FD
+	adc #$FF
 	sta OAMADDR,x
 	inx
 	inc $00
