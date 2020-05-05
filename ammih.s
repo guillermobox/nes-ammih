@@ -449,71 +449,97 @@ doProcessInput:
 @newInput:
 
 	lda PRESSED
-	beq @moveCharacter
+	beq @dispatchInput
 	rts
-@moveCharacter:
-	; we dispatch difference things depending on the game state
-	lda GAME_STATE
-	cmp #GameStatePlaying
-	bne :+
-	lda INPUT
-	and #DPAD_MASK
-	beq :+
-	jsr doMaybeMoveCharacters
-	jmp @done
-:
-	cmp #GameStateVictory
-	bne :+
-	jsr doMaybeMenu
-	jmp @done
-:
-	cmp #GameStateFailure
-	bne :+
-	jsr doMaybeMenu
-	jmp @done
-:
-	cmp #GameStateTitleScreen
-	bne :+
-	jsr doMaybeMenu
-	jmp @done
-:
-	cmp #GameStateIdle
-	bne :+
-	jsr doMaybeRestart
-	jmp @done
-:
-@done:
+@dispatchInput:
+
 	lda #1
 	sta PRESSED
-@finishedInput:
-	rts
-
-doMaybeRestart:
-	lda INPUT
-	and #DPAD_START
-	beq :+
-	lda #$00
-	sta ACTIVE_STAGE
-	lda #$01
-	sta BULK_LOAD
-	lda #GameStateTitleScreen
-	sta GAME_STATE
-:
-	rts
-
-doMaybeMenu:
+	; we dispatch depending on the game state
 	lda GAME_STATE
-	cmp #GameStateEndScreen
-	beq @notstart
+	jsr dispatchEngine
+	.addr doNothing
+	.addr handleInputPlaying
+	.addr handleInputVictory
+	.addr doNothing
+	.addr handleInputEndScreen
+	.addr handleInputFailure
+	.addr handleInputTitleScreen
+
+doNothing:
+	brk
+	rts
+
+; find in A the index of the addr to dispatch
+; the addresses follow the jsr call to this routine
+; control will be returned to the upper frame, so
+; do not call this from the bottom of the stack
+dispatchEngine:
+	asl
+
+	tsx
+
+	sec
+	inx
+	adc $0100,x
+	sta $00
+
+	lda #$00
+	inx
+	adc $0100,x
+	sta $01
+
+	txs
+
+	ldy #$00
+	lda ($00),y
+	sta $02
+	iny
+	lda ($00),y
+	sta $03
+	jmp ($0002)
+
+handleInputEndScreen:
 	lda INPUT
 	and #DPAD_START
-	beq @notstart
-		; go to next stage then
-		lda GAME_STATE
-		cmp #GameStateFailure
-		beq @toNextStage
-		cmp #GameStateTitleScreen
-		beq @toNextStage
+	beq @return
+		lda #$00
+		sta ACTIVE_STAGE
+		lda #$01
+		sta BULK_LOAD
+		lda #GameStateTitleScreen
+		sta GAME_STATE
+@return:
+	rts
+
+handleInputTitleScreen:
+	lda INPUT
+	and #DPAD_START
+	beq @return
+		lda #$00
+		sta ACTIVE_STAGE
+		lda #1
+		sta BULK_LOAD
+		lda #GameStateLoading
+		sta GAME_STATE
+@return:
+	rts
+
+handleInputFailure:
+	lda INPUT
+	and #DPAD_START
+	beq @return
+		lda #1
+		sta BULK_LOAD
+		lda #GameStateLoading
+		sta GAME_STATE
+@return:
+	rts
+
+handleInputVictory:
+	lda INPUT
+	and #DPAD_START
+	beq @return
 		inc ACTIVE_STAGE
 		lda ACTIVE_STAGE
 		cmp numberOfStages
@@ -528,10 +554,15 @@ doMaybeMenu:
 		sta GAME_STATE
 		lda #1
 		sta BULK_LOAD
-@notstart:
+@return:
 	rts
 
-doMaybeMoveCharacters:
+handleInputPlaying:
+	lda INPUT
+	and #DPAD_MASK
+	bne :+
+	rts
+	:
 	; calculate destination coordinates
 	lda P1_COOR
 	sta P1_NEXT_COOR
