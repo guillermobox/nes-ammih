@@ -44,6 +44,6 @@ int main(int argc, char *argv)
 		printf("$%02x,", val);
 		input++;
 	};
-	printf("$00\n");
+	printf("$ff\n");
 	return 0;
 };
