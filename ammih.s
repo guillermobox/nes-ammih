@@ -134,9 +134,33 @@ enterBulkLoadRoutine:
 	rts
 
 bulkLoadEndScreen:
-	jsr doShowEndScreen
-	rts
+	jsr clearField
 
+	lda #<congrats1
+	sta $00
+	lda #>congrats1
+	sta $01
+	jsr doEnqueueTextMessage
+
+	lda #<congrats2
+	sta $00
+	lda #>congrats2
+	sta $01
+	jsr doEnqueueTextMessage
+
+	lda #<congrats3
+	sta $00
+	lda #>congrats3
+	sta $01
+	jsr doEnqueueTextMessage
+
+	lda #<msg_start
+	sta $00
+	lda #>msg_start
+	sta $01
+	jsr doEnqueueTextMessage
+
+	rts
 
 bulkLoadTitleScreen:
 	jsr clearField
@@ -220,7 +244,6 @@ updateHUD:
 	rts
 
 updateBattery:
-
 	ldx PPU_ENCODED_LEN
 	lda #$08
 	sta PPU_ENCODED,x
@@ -389,35 +412,6 @@ updateGameState:
 clearField:
 	jsr initializeNametables
 	jsr initializeAttributeTable
-	rts
-
-doShowEndScreen:
-	jsr clearField
-
-	lda #<congrats1
-	sta $00
-	lda #>congrats1
-	sta $01
-	jsr doEnqueueTextMessage
-
-	lda #<congrats2
-	sta $00
-	lda #>congrats2
-	sta $01
-	jsr doEnqueueTextMessage
-
-	lda #<congrats3
-	sta $00
-	lda #>congrats3
-	sta $01
-	jsr doEnqueueTextMessage
-
-	lda #<msg_start
-	sta $00
-	lda #>msg_start
-	sta $01
-	jsr doEnqueueTextMessage
-
 	rts
 
 doNothing:
