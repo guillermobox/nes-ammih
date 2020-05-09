@@ -598,7 +598,15 @@ reset:
 .include "rendering.s"
 .include "initialize.s"
 
+.segment "HEADER"
+	.byte "NES",26, 2,1, 0,0 ; 32K PRG 8K CHR
+	.byte 0,0,0,0,0,0,0,0
+
 .segment "VECTORS"
-	.addr nmi
-	.addr reset
-	.addr nmi
+	.word nmi, reset, nmi
+
+.segment "STARTUP" ; eliminates warning
+
+.segment "CHARS"
+.incbin "chr.bin"
+
