@@ -71,6 +71,7 @@ nmi:
 		rti
 	:
 
+	jsr doCyclePalette
 	jsr doConsumePPUEncoded
 	; enqueue DMA transfer to OAM
 	lda #>OAMADDR
@@ -227,7 +228,10 @@ doConsumePPUEncoded:
 	inx
 	jmp @nextrow
 @done:
-	lda #$00
+	lda #$20
+	sta PPUADDR
+	lda #0
+	sta PPUADDR
 	sta PPUSCROLL
 	sta PPUSCROLL
 	sta PPU_ENCODED_LEN
@@ -580,11 +584,18 @@ reset:
 	lda #0
 	sta ACTIVE_STAGE
 
+	lda #<pswp_blinking
+	sta $00
+	lda #>pswp_blinking
+	sta $01
+	jsr loadPaletteSwap
+
 @BusyLoop: jmp @BusyLoop
 
 .include "text.s"
 .include "stages.s"
 .include "input.s"
+.include "rendering.s"
 .include "initialize.s"
 
 .segment "VECTORS"
