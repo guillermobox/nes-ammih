@@ -14,7 +14,7 @@ struct inesheader {
 	char padding[5];
 };
 
-void insert_file(const char *path, size_t expected_size, FILE *dst)
+void insert_file(const char *path, size_t expected_size, size_t offset, FILE *dst)
 {
 	char data[expected_size];
 	struct stat st;
@@ -23,13 +23,13 @@ void insert_file(const char *path, size_t expected_size, FILE *dst)
 		exit(1);
 	}
 	if (st.st_size != expected_size) {
-		printf("Size of file '%s' should be: 0x%x (%ld bytes)\n", path, st.st_size, st.st_size);
+		printf("Size of file '%s' should be: 0x%x (%ld bytes) instead is: 0x%x (%ld bytes)\n", path, expected_size, expected_size, st.st_size, st.st_size);
 		exit(1);
 	}
 	FILE * f = fopen(path, "rb");
 	fread(data, expected_size, 1, f);
 	fclose(f);
-	fwrite(data, expected_size, 1, dst);
+	fwrite(data + offset, expected_size - offset, 1, dst);
 };
 
 int main(int argc, char *argv[])
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 
 	FILE * f = fopen(output, "wb");
 	fwrite(&header, sizeof(header), 1, f);
-	insert_file(prg, 0x8000, f);
-	insert_file(chr, 0x2000, f);
+	insert_file(prg, 0x8010, 0x10, f);
+	insert_file(chr, 0x2000, 0x00, f);
 	fclose(f);
 }
