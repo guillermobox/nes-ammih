@@ -427,29 +427,19 @@ doNothing:
 ; control will be returned to the upper frame, so
 ; do not call this from the bottom of the stack
 dispatchEngine:
-	asl
-
-	tsx
-
-	sec
-	inx
-	adc $0100,x
+	asl     ; each address is 2 bytes long
+	tay
+	pla     ; load the addr of the first address
 	sta $00
-
-	lda #$00
-	inx
-	adc $0100,x
+	pla
 	sta $01
-
-	txs
-
-	ldy #$00
-	lda ($00),y
+	iny      ; account for the -1 in the addr stack
+	lda ($00),y ; load the high byte of the A'th address at $02
 	sta $02
 	iny
-	lda ($00),y
+	lda ($00),y ; load the low byte of the A'th adddress at $03
 	sta $03
-	jmp ($0002)
+	jmp ($02) ; directly jump (not jsr) to the loaded address
 
 doTriggerAudio:
 	rts
