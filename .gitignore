@@ -2,4 +2,6 @@
 *.bin
 *.o
 *.dbg
-env
+venv
+ammih.nes
+chr.s
