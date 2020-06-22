@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        div#editor {
+            display: flex;
+        }
+
+        div.row {
+            font-size: 0;
+            line-height: 50px;
+            height: 50px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        div.cell {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            margin: 0;
+            padding: 0;
+            background-color: lightgray;
+            border: 1px solid #dcdcdc;
+            cursor: pointer;
+            position: relative;
+        }
+
+        div.cell.walkable {
+            background-color: black;
+        }
+
+        div.cell.water {
+            background-color: darkslateblue;
+        }
+
+        div.cell.selected {
+            border: 2px solid #000;
+        }
+
+
+        div.cell.p1 {
+            background-image: url("robot.png");
+            background-size: 48px;
+            image-rendering: pixelated;
+        }
+
+        div.cell.p2 {
+            background-image: url("robot2.png");
+            background-size: 48px;
+            image-rendering: pixelated;
+        }
+
+        div.cell.terminal {
+            background-image: url("terminal.png");
+            background-size: 48px;
+            image-rendering: pixelated;
+        }
+
+        #board>div.row>div.cell:hover {
+            background-color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="editor">
+        <div id="board">
+        </div>
+        <div id="info">
+            <h3>Legend</h3>
+            <p>Pick one of these to later modify the grid</p>
+            <div class="cell"></div> Empty (non-reachable) <br />
+            <div class="cell walkable"></div> Walkable (regular floor) <br />
+            <div class="cell water"></div> Water (it kills you) <br />
+            <div class="cell walkable p1"></div> Starting location player 1 <br />
+            <div class="cell walkable p2"></div> Starting location player 2 <br />
+            <div class="cell walkable terminal"></div> Exit location for any player <br />
+            <input name="code" type="text" disabled value=""></input>
+            <button id="try-this-map">Try this map</button>
+            <h3></h3>
+        </div>
+    </div>
+    <script>
+        var selected = "cell walkable";
+        function format(n) { return ("0" + n.toString(16)).slice(-2); };
+
+        function encode_type_len(cells, type) {
+            var code = "", len = 0;
+            for (var cell of cells) {
+                if (cell.className.startsWith(type)) {
+                    code += cell.dataset.row + cell.dataset.col;
+                    len += 1;
+                };
+            };
+            return format(len) + code;
+        };
+
+        function update_code() {
+            var input = document.getElementsByName("code")[0];
+            var code = "";
+            var cells = document.querySelectorAll("#board>div>div.cell");
+            code += encode_type_len(cells, "cell walkable");
+            code += encode_type_len(cells, "cell water");
+            code += encode_type_len(cells, "cell walkable p1");
+            code += encode_type_len(cells, "cell walkable p2");
+            code += encode_type_len(cells, "cell walkable terminal");
+            input.value = code;
+        };
+
+        function hey(event) {
+            event.target.className = selected;
+            update_code();
+        };
+
+        function change_select(event) {
+            selected = event.currentTarget.className;
+        };
+
+        function try_this_map() {
+            var code = document.getElementsByName("code")[0].value;
+            console.log(code);
+        }
+        var board = document.getElementById("board");
+
+        for (var i = 0; i < 14; i++) {
+            var row = document.createElement("div");
+            row.className = "row";
+            for (var j = 0; j < 16; j++) {
+                var cell = document.createElement("div");
+                cell.className = "cell";
+                cell.addEventListener("click", hey);
+                cell.dataset.row = i.toString(16);
+                cell.dataset.col = j.toString(16);
+                row.appendChild(cell);
+            };
+            board.appendChild(row);
+        };
+        for (var cell of document.querySelectorAll("div#info>div.cell")) {
+            cell.addEventListener("click", change_select);
+        };
+
+        document.getElementById("try-this-map").addEventListener("click", try_this_map)
+    </script>
+
+</body>
+
+</html>
