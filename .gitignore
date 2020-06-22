@@ -3,5 +3,6 @@
 *.o
 *.dbg
 venv
+cc65
 ammih.nes
 chr.s
