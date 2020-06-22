@@ -2,8 +2,7 @@
 
 This is a basic puzzle-like NES game.
 
-To compile, the cc65 suite should be installed, and also a python environment
-with the Pillow package. `make` produces `ammih.nes`.
+To compile, the [cc65](https://github.com/cc65/cc65.git) suite should be installed. There is a requirement to deal with the python Pillow package but it will be handled by make. This way just running `make` produces `ammih.nes`.
 
 ## The game
 
