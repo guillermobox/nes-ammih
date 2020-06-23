@@ -5,10 +5,18 @@
     <style>
         * {
             box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
         }
 
         div#editor {
             display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        div#board,
+        div#info {
+            margin: 10px;
         }
 
         div.row {
@@ -25,45 +33,73 @@
             height: 34px;
             margin: 0;
             padding: 0;
-            background-color: lightgray;
-            border: 1px solid #dcdcdc;
             cursor: pointer;
             position: relative;
+            background-color: #ddd;
+            border: 1px transparent;
+            background-position-x: 1px;
+            background-position-y: 1px;
+            background-origin: border-box;
+            background-size: 34px;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            background-image: url("/static/stripes.png");
         }
 
         div.cell.walkable {
             background-color: black;
+            background-image: none;
         }
 
         div.cell.water {
-            background-color: darkslateblue;
+            background-image: url("/static/deadlyground.png");
+            background-size: 32px;
         }
-
-        div.cell.selected {
-            border: 2px solid #000;
-        }
-
 
         div.cell.p1 {
             background-image: url("/static/robot.png");
             background-size: 32px;
-            image-rendering: pixelated;
         }
 
         div.cell.p2 {
             background-image: url("/static/robot2.png");
             background-size: 32px;
-            image-rendering: pixelated;
         }
 
         div.cell.terminal {
             background-image: url("/static/terminal.png");
             background-size: 32px;
-            image-rendering: pixelated;
         }
 
         #board>div.row>div.cell:hover {
-            background-color: white;
+            /*background: white;*/
+            box-shadow: 0px 0px 10px darkred;
+            z-index: 100;
+            border: 1px solid red;
+        }
+
+        div#selected {
+            border: 2px solid red;
+        }
+
+        div#info>label {
+            display: inline-block;
+            height: 34px;
+            margin: 0;
+            padding: 0;
+            line-height: 34px;
+            vertical-align: middle;
+            margin-bottom: 5px;
+        }
+
+        div#info>div.cell {
+            vertical-align: middle;
+            margin-bottom: 5px;
+
+        }
+
+        button#try-this-map {
+            width: 100%;
         }
     </style>
 </head>
@@ -73,21 +109,19 @@
         <div id="board">
         </div>
         <div id="info">
-            <h3>Legend</h3>
-            <p>Pick one of these to later modify the grid</p>
-            <div class="cell"></div> Empty (non-reachable) <br />
+            <div class="cell"></div> <label>Empty (non-reachable)</label><br />
             <div class="cell walkable"></div> Walkable (regular floor) <br />
             <div class="cell walkable water"></div> Water (it kills you) <br />
             <div class="cell walkable p1"></div> Starting location player 1 <br />
             <div class="cell walkable p2"></div> Starting location player 2 <br />
             <div class="cell walkable terminal"></div> Exit location for any player <br />
-            <input name="code" type="text" disabled value=""></input>
+            <input name="code" type="hidden" value=""></input>
+            <input name="selected" type="hidden" value="cell walkable"></input>
             <button id="try-this-map">Try this map</button>
             <h3></h3>
         </div>
     </div>
     <script>
-        var selected = "cell walkable";
         function format(n) { return ("0" + n.toString(16)).slice(-2); };
 
         function encode_type_len(cells, type) {
@@ -129,13 +163,25 @@
         };
 
         function hey(event) {
+            var selected = document.getElementsByName("selected")[0].value;
             event.target.className = selected;
             update_code();
         };
 
         function change_select(event) {
-            selected = event.currentTarget.className;
+            change_paint(event.currentTarget.className);
         };
+
+        function change_paint(type) {
+            for (var cell of document.querySelectorAll("div#info>div.cell")) {
+                if (cell.className == type) {
+                    cell.id = "selected";
+                } else {
+                    cell.id = null;
+                }
+            };
+            document.getElementsByName("selected")[0].value = type;
+        }
 
         function try_this_map() {
             var code = document.getElementsByName("code")[0].value;
@@ -143,20 +189,21 @@
         }
         var board = document.getElementById("board");
 
-        for (var i = 0; i < 14; i++) {
+        for (var i = 3; i < 14; i++) {
             var row = document.createElement("div");
             row.className = "row";
-            for (var j = 0; j < 16; j++) {
+            for (var j = 1; j < 15; j++) {
                 var cell = document.createElement("div");
                 cell.className = "cell";
-                cell.addEventListener("click", hey);
                 cell.dataset.row = i.toString(16);
                 cell.dataset.col = j.toString(16);
                 cell.id = 'cell-' + i.toString(16) + j.toString(16);
+                cell.addEventListener("click", hey);
                 row.appendChild(cell);
             };
             board.appendChild(row);
         };
+
         for (var cell of document.querySelectorAll("div#info>div.cell")) {
             cell.addEventListener("click", change_select);
         };
@@ -192,8 +239,9 @@
                 update_code();
             }
         }
-        from_hash();
 
+        from_hash();
+        change_paint("cell");
         document.getElementById("try-this-map").addEventListener("click", try_this_map)
 
     </script>
