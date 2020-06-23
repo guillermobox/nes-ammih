@@ -394,11 +394,6 @@ updateGameState:
 @died_return:
 	lda #GameStateFailure
 	sta GAME_STATE
-	lda #<ohman
-	sta $00
-	lda #>ohman
-	sta $01
-	jsr doEnqueueTextMessage
 	lda #<msg_try_again
 	sta $00
 	lda #>msg_try_again
@@ -411,11 +406,6 @@ updateGameState:
 	lda #<welldone
 	sta $00
 	lda #>welldone
-	sta $01
-	jsr doEnqueueTextMessage
-	lda #<msg_press_start
-	sta $00
-	lda #>msg_press_start
 	sta $01
 	jsr doEnqueueTextMessage
 	rts
