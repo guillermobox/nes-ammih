@@ -494,11 +494,6 @@ doLoadStage:
 	sta PPU_BUF_VAL
 	jsr writeMetatile
 
-	; CONSUME THE STEPS
-	iny
-	lda (STAGE_ADDR),y
-	sta STAGE_STEPS
-
 ; input tile coordinates: x = 2 y = 3
 ; PPU nametable address: 0x2062
 	lda #<msg_battery

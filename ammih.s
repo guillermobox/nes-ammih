@@ -190,7 +190,7 @@ bulkLoadTitleScreen:
 bulkLoadStage:
 	jsr doLoadStage
 	jsr updatePlayerSprites
-	lda STAGE_STEPS
+	lda #0
 	sta STEPS_TAKEN
 
 	; enqueue DMA transfer to OAM
@@ -243,8 +243,19 @@ updateHUD:
 	beq :+
 	rts
 	:
+	jsr updateStepsNumber
+	; jsr updateBattery
+	rts
 
-	jsr updateBattery
+updateStepsNumber:
+
+	lda #$20
+	sta $00
+	lda #$68
+	sta $01
+	lda STEPS_TAKEN
+	sta $02
+	jsr enqueueNumber
 	rts
 
 updateBattery:
@@ -378,10 +389,6 @@ updateGameState:
 	jmp @victory_return
 
 @return:
-	lda STEPS_TAKEN
-	bne :+
-	jmp @died_return
-:
 	rts
 
 @died_return:
@@ -567,7 +574,7 @@ reset:
 	sta PPUCONTROL
 
 	; we kickstart the game loading the title screen
-	lda #GameStateTitleScreen
+	lda #GameStatePlaying
 	sta GAME_STATE
 	lda #1
 	sta BULK_LOAD

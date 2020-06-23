@@ -79,16 +79,6 @@ handleInputVictory:
 	lda INPUT
 	and #DPAD_START
 	beq @return
-		inc ACTIVE_STAGE
-		lda ACTIVE_STAGE
-		cmp numberOfStages
-		bne @toNextStage
-		lda #GameStateEndScreen
-		sta GAME_STATE
-		lda #1
-		sta BULK_LOAD
-		rts
-		@toNextStage:
 		lda #GameStatePlaying
 		sta GAME_STATE
 		lda #1
@@ -198,7 +188,18 @@ handleInputPlaying:
 	ldx A_CHARACTER_MOVED
 	beq @nobodymoved
 	; BCD increment the variable steps taken
-	dec STEPS_TAKEN
+	inc STEPS_TAKEN
+	lda STEPS_TAKEN
+	and #$0f
+	cmp #$0a
+	bmi :+
+		inc STEPS_TAKEN
+		inc STEPS_TAKEN
+		inc STEPS_TAKEN
+		inc STEPS_TAKEN
+		inc STEPS_TAKEN
+		inc STEPS_TAKEN
+	:
 @nobodymoved:
 	rts
 
