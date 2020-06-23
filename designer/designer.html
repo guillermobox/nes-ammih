@@ -13,16 +13,16 @@
 
         div.row {
             font-size: 0;
-            line-height: 50px;
-            height: 50px;
+            line-height: 34px;
+            height: 34px;
             margin-left: auto;
             margin-right: auto;
         }
 
         div.cell {
             display: inline-block;
-            width: 50px;
-            height: 50px;
+            width: 34px;
+            height: 34px;
             margin: 0;
             padding: 0;
             background-color: lightgray;
@@ -45,20 +45,20 @@
 
 
         div.cell.p1 {
-            background-image: url("robot.png");
-            background-size: 48px;
+            background-image: url("/static/robot.png");
+            background-size: 32px;
             image-rendering: pixelated;
         }
 
         div.cell.p2 {
-            background-image: url("robot2.png");
-            background-size: 48px;
+            background-image: url("/static/robot2.png");
+            background-size: 32px;
             image-rendering: pixelated;
         }
 
         div.cell.terminal {
-            background-image: url("terminal.png");
-            background-size: 48px;
+            background-image: url("/static/terminal.png");
+            background-size: 32px;
             image-rendering: pixelated;
         }
 
@@ -77,7 +77,7 @@
             <p>Pick one of these to later modify the grid</p>
             <div class="cell"></div> Empty (non-reachable) <br />
             <div class="cell walkable"></div> Walkable (regular floor) <br />
-            <div class="cell water"></div> Water (it kills you) <br />
+            <div class="cell walkable water"></div> Water (it kills you) <br />
             <div class="cell walkable p1"></div> Starting location player 1 <br />
             <div class="cell walkable p2"></div> Starting location player 2 <br />
             <div class="cell walkable terminal"></div> Exit location for any player <br />
@@ -101,16 +101,31 @@
             return format(len) + code;
         };
 
+        function decode_type_len(hash) {
+            var len = parseInt(hash.slice(0, 2), 16);
+            if (len == 0)
+                return [];
+            var rv = [];
+            for (var i = 0; i < len; i++) {
+                var pair = hash.slice(2 + 2 * i, 4 + 2 * i);
+                rv.push([pair[0], pair[1]]);
+            }
+            return rv;
+        };
+
         function update_code() {
             var input = document.getElementsByName("code")[0];
             var code = "";
             var cells = document.querySelectorAll("#board>div>div.cell");
             code += encode_type_len(cells, "cell walkable");
-            code += encode_type_len(cells, "cell water");
+            code += encode_type_len(cells, "cell walkable water");
             code += encode_type_len(cells, "cell walkable p1");
             code += encode_type_len(cells, "cell walkable p2");
             code += encode_type_len(cells, "cell walkable terminal");
             input.value = code;
+            var url = window.location.href;
+            url = url.slice(0, url.lastIndexOf('#'));
+            window.location.replace(url + '#' + code);
         };
 
         function hey(event) {
@@ -124,7 +139,7 @@
 
         function try_this_map() {
             var code = document.getElementsByName("code")[0].value;
-            console.log(code);
+            window.location.href = "/testbench/" + code;
         }
         var board = document.getElementById("board");
 
@@ -137,6 +152,7 @@
                 cell.addEventListener("click", hey);
                 cell.dataset.row = i.toString(16);
                 cell.dataset.col = j.toString(16);
+                cell.id = 'cell-' + i.toString(16) + j.toString(16);
                 row.appendChild(cell);
             };
             board.appendChild(row);
@@ -145,7 +161,41 @@
             cell.addEventListener("click", change_select);
         };
 
+        function set_cells_with_type(cells, type) {
+            for (var cell of cells) {
+                var row = cell[0];
+                var col = cell[1];
+                document.getElementById('cell-' + row + col).className = type;
+            }
+        }
+        function from_hash() {
+            var hash = window.location.hash;
+            if (hash.length != 0) {
+                hash = hash.slice(1);
+                var walkable = decode_type_len(hash);
+                hash = hash.slice((walkable.length + 1) * 2);
+                set_cells_with_type(walkable, "cell walkable");
+                var cells = decode_type_len(hash);
+                hash = hash.slice((cells.length + 1) * 2);
+                set_cells_with_type(cells, "cell walkable water");
+                var cells = decode_type_len(hash);
+                hash = hash.slice((cells.length + 1) * 2);
+                set_cells_with_type(cells, "cell walkable p1");
+                var cells = decode_type_len(hash);
+                hash = hash.slice((cells.length + 1) * 2);
+                set_cells_with_type(cells, "cell walkable p2");
+                var cells = decode_type_len(hash);
+                hash = hash.slice((cells.length + 1) * 2);
+                set_cells_with_type(cells, "cell walkable terminal");
+                update_code();
+            } else {
+                update_code();
+            }
+        }
+        from_hash();
+
         document.getElementById("try-this-map").addEventListener("click", try_this_map)
+
     </script>
 
 </body>

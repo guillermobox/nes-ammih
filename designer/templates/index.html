@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>A match made in heaven</title>
+	<link rel="stylesheet" href="/static/normalize.css" />
+	<link rel="stylesheet" href="/static/embed.css" />
+	<script type="text/javascript" src="/static/jsnes.min.js"></script>
+	<script type="text/javascript" src="/static/nes-embed.js"></script>
+</head>
+
+<body>
+	<script>
+		window.onload = function () {
+			nes_load_url("nes-canvas", "{{ game }}");
+		}
+	</script>
+	<div>
+		<canvas id="nes-canvas" width="256" height="240" />
+	</div>
+	<pre>{{ code }}</pre>
+	<p>
+		<a href="/#{{ code }}">Click to go back to editor</a>
+	</p>
+</body>
+
+</html>

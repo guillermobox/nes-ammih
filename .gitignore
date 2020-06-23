@@ -6,3 +6,5 @@ venv
 cc65
 ammih.nes
 chr.s
+.vscode
+__pycache__

@@ -19,7 +19,7 @@ venv: requirements.txt
 	python3 -m venv venv
 	./venv/bin/pip install -r requirements.txt
 
-ammih.nes prg.bin: cc65 chr.bin ammih.s initialize.s stages.s text.s chr.s input.s rendering.s
+ammih.nes prg.bin: cc65 chr.bin compiled.s ammih.s initialize.s stages.s text.s chr.s input.s rendering.s
 	cc65/bin/ca65 -g ammih.s
 	cc65/bin/ld65 --dbgfile ammih.dbg -t nes ammih.o -o ammih.nes
 
