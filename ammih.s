@@ -31,6 +31,7 @@ STEPS_TAKEN  = $0204
 STAGE_EXIT_1 = $0205
 STAGE_EXIT_2 = $0206
 STAGE_STEPS  = $0207
+STAGE_MIN_STEPS = $0208
 FRAME = $0100
 
 INPUT        = $0300
@@ -248,7 +249,8 @@ updateHUD:
 	rts
 
 updateStepsNumber:
-
+; input tile coordinates: x = 8 y = 3
+; PPU nametable address: 0x2068
 	lda #$20
 	sta $00
 	lda #$68
@@ -256,6 +258,17 @@ updateStepsNumber:
 	lda STEPS_TAKEN
 	sta $02
 	jsr enqueueNumber
+
+; input tile coordinates: x = 27 y = 3
+; PPU nametable address: 0x207b
+	lda #$20
+	sta $00
+	lda #$7b
+	sta $01
+	lda STAGE_MIN_STEPS
+	sta $02
+	jsr enqueueNumber
+
 	rts
 
 updateBattery:
@@ -407,6 +420,11 @@ updateGameState:
 	sta $00
 	lda #>welldone
 	sta $01
+	lda STEPS_TAKEN
+	cmp STAGE_MIN_STEPS
+	bcs :+
+	sta STAGE_MIN_STEPS
+	:
 	jsr doEnqueueTextMessage
 	rts
 
@@ -570,7 +588,8 @@ reset:
 	sta BULK_LOAD
 	lda #0
 	sta ACTIVE_STAGE
-
+	lda #$99
+	sta STAGE_MIN_STEPS	
 	lda #<pswp_blinking
 	sta $00
 	lda #>pswp_blinking

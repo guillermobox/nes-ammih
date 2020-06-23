@@ -29,6 +29,14 @@ msg_battery:
 ; The string: "steps"
 .byte $1c,$1d,$0e,$19,$1c,$ff
 
+msg_minimum:
+; input tile coordinates: x = 20 y = 3
+; PPU nametable address: 0x2074
+.byte $20, $74
+; Encoded string produced by encode.c
+; The string: "record"
+.byte $1b,$0e,$0c,$18,$1b,$0d,$ff
+
 msg_title:
 .byte $21,$c8
 ; Encoded string produced by encode.c

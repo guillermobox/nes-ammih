@@ -502,6 +502,11 @@ doLoadStage:
 	sta $01
 	jsr doEnqueueTextMessage
 
+	lda #<msg_minimum
+	sta $00
+	lda #>msg_minimum
+	sta $01
+	jsr doEnqueueTextMessage
 	rts
 
 consumeMapCoordinates:
