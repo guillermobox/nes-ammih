@@ -34,9 +34,11 @@ class Compiler:
 
     def validate(self):
         if len(self.p1) != 1:
-            raise CodeWrong("Player 1 missing starting location")
+            raise CodeWrong(
+                "A single starting location for player A is required")
         if len(self.p2) != 1:
-            raise CodeWrong("Player 2 missing starting location")
+            raise CodeWrong(
+                "A single starting location for player B is required")
         if len(self.terminal) != 2:
             raise CodeWrong("Two exit locations required")
 

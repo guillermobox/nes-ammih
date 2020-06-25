@@ -12,6 +12,9 @@ def designer():
 
 @app.route('/testbench/<code>')
 def new_code(code):
-    compiler = Compiler(code)
-    game = compiler.compile()
-    return render_template("index.html", game=game, code=code)
+    try:
+        compiler = Compiler(code)
+        game = compiler.compile()
+        return render_template("index.html", game=game, code=code)
+    except Exception as e:
+        return render_template("error.html", backtrace=str(e), code=code)
