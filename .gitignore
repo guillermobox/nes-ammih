@@ -6,3 +6,6 @@ venv
 cc65
 ammih.nes
 chr.s
+version.s
+encode
+settings.json
