@@ -41,6 +41,13 @@ msg_title2:
 ; The string: "still in development"
 .byte $1c,$1d,$12,$15,$15,$24,$12,$17,$24,$0d,$0e,$1f,$0e,$15,$18,$19,$16,$0e,$17,$1d,$ff
 
+msg_title3:
+.byte $22,$48
+; Encoded string produced by encode.c
+; The string: "version "
+.byte $1f,$0e,$1b,$1c,$12,$18,$17,$24
+.include "version.s"
+
 msg_start:
 .byte $23, $2b
 ; Encoded string produced by encode.c

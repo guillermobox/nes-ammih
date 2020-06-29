@@ -180,6 +180,11 @@ bulkLoadTitleScreen:
 	lda #>msg_title2
 	sta $01
 	jsr doEnqueueTextMessage
+	lda #<msg_title3
+	sta $00
+	lda #>msg_title3
+	sta $01
+	jsr doEnqueueTextMessage
 	lda #<msg_start
 	sta $00
 	lda #>msg_start
