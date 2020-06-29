@@ -5,94 +5,111 @@
     <style>
         * {
             box-sizing: border-box;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: sans-serif;
+            user-select: none;
         }
 
-        div#editor {
+        div#designer {
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         div#board,
-        div#info {
+        div#toolbar {
             margin: 10px;
         }
 
         div.row {
             font-size: 0;
-            line-height: 34px;
-            height: 34px;
-            margin-left: auto;
-            margin-right: auto;
+            line-height: 32px;
+            height: 32px;
+            width: 448px;
         }
 
         div.cell {
             display: inline-block;
-            width: 34px;
-            height: 34px;
+            width: 32px;
+            height: 32px;
             margin: 0;
             padding: 0;
             cursor: pointer;
             position: relative;
-            background-color: #ddd;
-            border: 1px transparent;
-            background-position-x: 1px;
-            background-position-y: 1px;
             background-origin: border-box;
-            background-size: 34px;
+            background-size: 32px;
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
             background-image: url("/static/stripes.png");
         }
 
-        div.cell.walkable {
+        div.cell.selected::before {
+            margin: -2px;
+        }
+
+        div.cell[data-type="walkable"] {
             background-color: black;
             background-image: none;
         }
 
-        div.cell.water {
+        div.cell[data-type="water"] {
+            background-color: black;
             background-image: url("/static/deadlyground.png");
             background-size: 32px;
         }
 
-        div.cell.p1 {
-            background-image: url("/static/robot.png");
-            background-size: 32px;
-        }
-
-        div.cell.p2 {
-            background-image: url("/static/robot2.png");
-            background-size: 32px;
-        }
-
-        div.cell.terminal {
+        div.cell[data-type="exit"] {
+            background-color: black;
             background-image: url("/static/terminal.png");
             background-size: 32px;
         }
 
+        div.cell[data-object="start-a"]::before {
+            background-image: url("/static/robot.png");
+            background-size: 32px;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 32px;
+            height: 32px;
+            content: " ";
+        }
+
+        div.cell[data-object="start-b"]::before {
+            background-image: url("/static/robot2.png");
+            background-size: 32px;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 32px;
+            height: 32px;
+            content: " ";
+        }
+
         #board>div.row>div.cell:hover {
-            /*background: white;*/
-            box-shadow: 0px 0px 10px darkred;
+            box-shadow: 0px 0px 16px darkred;
             z-index: 100;
             border: 1px solid red;
         }
 
-        div#selected {
+        #board>div.row>div.cell:hover::before {
+            margin: -1px;
+        }
+
+        div.selected {
             border: 2px solid red;
         }
 
-        div#info>label {
+        div#toolbar>label {
             display: inline-block;
-            height: 34px;
+            height: 32px;
             margin: 0;
             padding: 0;
-            line-height: 34px;
+            line-height: 32px;
             vertical-align: middle;
             margin-bottom: 5px;
         }
 
-        div#info>div.cell {
+        div#toolbar>div.cell {
             vertical-align: middle;
             margin-bottom: 5px;
 
@@ -105,145 +122,105 @@
 </head>
 
 <body>
-    <div id="editor">
+    <div id="designer">
         <div id="board">
         </div>
-        <div id="info">
-            <div class="cell"></div> <label>Empty (non-reachable)</label><br />
-            <div class="cell walkable"></div> Walkable (regular floor) <br />
-            <div class="cell walkable water"></div> Water (it kills you) <br />
-            <div class="cell walkable p1"></div> Starting location robot A <br />
-            <div class="cell walkable p2"></div> Starting location robot B <br />
-            <div class="cell walkable terminal"></div> Exit location for any robot <br />
+        <div id="toolbar">
+            <div id="default-tool" data-type="empty" data-object="empty" class="cell selected"></div> <label>Empty
+                (non-reachable)</label><br />
+            <div data-type="walkable" class="cell"></div> <label>Walkable (regular floor)</label> <br />
+            <div data-type="water" class="cell"></div> <label>Water (it kills you)</label> <br />
+            <div data-type="exit" class="cell"></div> <label>Exit location for any robot</label>
+            <hr />
+            <div data-object="start-a" class="cell"></div> <label>Starting location robot A</label>
+            <br />
+            <div data-object="start-b" class="cell"></div> <label>Starting location robot B</label>
+            <br />
             <input name="code" type="hidden" value=""></input>
-            <input name="selected" type="hidden" value="cell walkable"></input>
             <button id="try-this-map">Try this map</button>
-            <h3></h3>
+            <p id="feedback"></p>
         </div>
     </div>
+
     <script>
-        function format(n) { return ("0" + n.toString(16)).slice(-2); };
-
-        function encode_type_len(cells, type) {
-            var code = "", len = 0;
-            for (var cell of cells) {
-                if (cell.className.startsWith(type)) {
-                    code += cell.dataset.row + cell.dataset.col;
-                    len += 1;
-                };
+        var selected_tool = document.getElementById("default-tool").dataset, painting = false;
+        function maybe_paint(event) {
+            if (painting) {
+                for (var key in selected_tool)
+                    event.currentTarget.dataset[key] = selected_tool[key];
             };
-            return format(len) + code;
+        };
+        function start_painting(event) {
+            painting = true;
+            maybe_paint(event);
+        };
+        function stop_painting(event) {
+            painting = false;
         };
 
-        function decode_type_len(hash) {
-            var len = parseInt(hash.slice(0, 2), 16);
-            if (len == 0)
-                return [];
-            var rv = [];
-            for (var i = 0; i < len; i++) {
-                var pair = hash.slice(2 + 2 * i, 4 + 2 * i);
-                rv.push([pair[0], pair[1]]);
-            }
-            return rv;
-        };
-
-        function update_code() {
-            var input = document.getElementsByName("code")[0];
-            var code = "";
-            var cells = document.querySelectorAll("#board>div>div.cell");
-            code += encode_type_len(cells, "cell walkable");
-            code += encode_type_len(cells, "cell walkable water");
-            code += encode_type_len(cells, "cell walkable p1");
-            code += encode_type_len(cells, "cell walkable p2");
-            code += encode_type_len(cells, "cell walkable terminal");
-            input.value = code;
-            var url = window.location.href;
-            url = url.slice(0, url.lastIndexOf('#'));
-            window.location.replace(url + '#' + code);
-        };
-
-        function hey(event) {
-            var selected = document.getElementsByName("selected")[0].value;
-            event.target.className = selected;
-            update_code();
-        };
-
-        function change_select(event) {
-            change_paint(event.currentTarget.className);
-        };
-
-        function change_paint(type) {
-            for (var cell of document.querySelectorAll("div#info>div.cell")) {
-                if (cell.className == type) {
-                    cell.id = "selected";
-                } else {
-                    cell.id = null;
-                }
+        function change_tool(event) {
+            selected_tool = event.currentTarget.dataset;
+            for (var cell of document.querySelectorAll("div#toolbar>div.cell")) {
+                cell.className = "cell";
             };
-            document.getElementsByName("selected")[0].value = type;
-        }
+            event.currentTarget.className = "cell selected";
+        };
 
         function try_this_map() {
-            var code = document.getElementsByName("code")[0].value;
-            window.location.href = "/testbench/" + code;
-        }
-        var board = document.getElementById("board");
+            const code = get_serialization();
+            const request = new XMLHttpRequest();
+            request.open("POST", "/compile/", true);
+            request.setRequestHeader("Content-Type", "application/json");
+            request.send(JSON.stringify(code));
+            document.getElementById("feedback").innerText = "compiling...";
+            request.onprogress = (e) => {
+                document.getElementById("feedback").innerText = request.responseText;
+            }
+        };
 
-        for (var i = 3; i < 14; i++) {
+        function get_coordinates_for(query) {
+            var coordinates = [];
+            for (var cell of document.querySelectorAll("#board>div>div.cell[" + query + "]")) {
+                coordinates.push([parseInt(cell.dataset.row), parseInt(cell.dataset.col)]);
+            }
+            return coordinates;
+        };
+
+        function get_serialization() {
+            var code = {};
+            code.walkable = get_coordinates_for("data-type=walkable");
+            code.exits = get_coordinates_for("data-type=exit");
+            code.water = get_coordinates_for("data-type=water");
+            code.start_positions = [
+                get_coordinates_for("data-object=start-a"),
+                get_coordinates_for("data-object=start-b")
+            ];
+            code.steps = 0;
+            return code;
+        };
+
+        var board = document.getElementById("board");
+        for (var i = 0; i < 11; i++) {
             var row = document.createElement("div");
             row.className = "row";
-            for (var j = 1; j < 15; j++) {
+            for (var j = 0; j < 14; j++) {
                 var cell = document.createElement("div");
                 cell.className = "cell";
-                cell.dataset.row = i.toString(16);
-                cell.dataset.col = j.toString(16);
-                cell.id = 'cell-' + i.toString(16) + j.toString(16);
-                cell.addEventListener("click", hey);
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+                cell.addEventListener("mousedown", start_painting);
+                cell.addEventListener("mouseenter", maybe_paint);
                 row.appendChild(cell);
             };
             board.appendChild(row);
         };
+        document.addEventListener("mouseup", stop_painting);
 
-        for (var cell of document.querySelectorAll("div#info>div.cell")) {
-            cell.addEventListener("click", change_select);
+        for (var cell of document.querySelectorAll("div#toolbar>div.cell")) {
+            cell.addEventListener("click", change_tool);
         };
 
-        function set_cells_with_type(cells, type) {
-            for (var cell of cells) {
-                var row = cell[0];
-                var col = cell[1];
-                document.getElementById('cell-' + row + col).className = type;
-            }
-        }
-        function from_hash() {
-            var hash = window.location.hash;
-            if (hash.length != 0) {
-                hash = hash.slice(1);
-                var walkable = decode_type_len(hash);
-                hash = hash.slice((walkable.length + 1) * 2);
-                set_cells_with_type(walkable, "cell walkable");
-                var cells = decode_type_len(hash);
-                hash = hash.slice((cells.length + 1) * 2);
-                set_cells_with_type(cells, "cell walkable water");
-                var cells = decode_type_len(hash);
-                hash = hash.slice((cells.length + 1) * 2);
-                set_cells_with_type(cells, "cell walkable p1");
-                var cells = decode_type_len(hash);
-                hash = hash.slice((cells.length + 1) * 2);
-                set_cells_with_type(cells, "cell walkable p2");
-                var cells = decode_type_len(hash);
-                hash = hash.slice((cells.length + 1) * 2);
-                set_cells_with_type(cells, "cell walkable terminal");
-                update_code();
-            } else {
-                update_code();
-            }
-        }
-
-        from_hash();
-        change_paint("cell");
         document.getElementById("try-this-map").addEventListener("click", try_this_map)
-
     </script>
 
 </body>

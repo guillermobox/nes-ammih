@@ -1,4 +1,4 @@
-from flask import Flask, send_file, render_template
+from flask import Flask, send_file, render_template, request
 from compiler import Compiler
 
 app = Flask('designer', static_url_path='/static/', static_folder='.')
@@ -10,11 +10,16 @@ def designer():
     return send_file("designer.html")
 
 
-@app.route('/testbench/<code>')
-def new_code(code):
+@app.route('/compile/', methods=["POST"])
+def compile():
     try:
-        compiler = Compiler(code)
-        game = compiler.compile()
-        return render_template("index.html", game=game, code=code)
+        code = request.get_json()
+        compiler = Compiler(code).compile()
+        return "success"
     except Exception as e:
-        return render_template("error.html", backtrace=str(e), code=code)
+        return str(e)
+
+
+@app.route('/play/<id>')
+def play(id):
+    return render_template("index.html", game=id)
