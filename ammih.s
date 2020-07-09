@@ -40,6 +40,9 @@ ACTIVE_STAGE = $0303
 GAME_STATE   = $0306
 BULK_LOAD    = $0307
 
+AUDIO_PATTERN_COUNTER = $03F0
+AUDIO_NOTE_IDX        = $03F1
+
 PPU_ENCODED     = $0400
 PPU_ENCODED_LEN = $04FF
 
@@ -446,8 +449,6 @@ dispatchEngine:
 	sta $03
 	jmp ($02) ; directly jump (not jsr) to the loaded address
 
-doTriggerAudio:
-	rts
 
 ; show metasprite at coordinates, use 'x' to pick what OAMADDR to use
 ; sprite is found at $00
@@ -561,6 +562,7 @@ reset:
 
 	jsr initializeNametables
 	jsr initializeApu
+	jsr initializeAudioEngine
 	jsr initializePalette
 	jsr initializeAttributeTable
 	jsr initializeDmaTable
@@ -592,6 +594,7 @@ reset:
 .include "input.s"
 .include "rendering.s"
 .include "initialize.s"
+.include "audio.s"
 
 .segment "HEADER"
 	.byte "NES",26, 2,1, 0,0 ; 32K PRG 8K CHR
