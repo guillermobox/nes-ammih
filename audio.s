@@ -4,7 +4,6 @@ initializeAudioEngine:
     sta AUDIO_NOTE_IDX
     rts
 
-
 doTriggerAudio:
     ldx AUDIO_NOTE_IDX
     ; load the trigger cycle of the actual note
@@ -12,26 +11,24 @@ doTriggerAudio:
     ; this might be FF, this never matches always leaves
     cmp AUDIO_PATTERN_COUNTER
     bne @done
-    ; we found at X something to play, so we load the note
-    ldy pattern_addr+1, x
-    ; if we loaded a zero, this is a silence
+    ; we found at X something to play, load the note offset
+    lda pattern_addr+1, x
+    tax
+    cpx #$ff
+    ; if we loaded a FF, this is a silence
     bne :+
         jsr doSilenceChannel
         jmp @consume
     :
-    ; otherwise load the other byte and call play
-    sty $00
-    ldy pattern_addr+2, x
-    sty $01
     jsr doPlayNote
 @consume:
     ; consume the audio pattern note
     inc AUDIO_NOTE_IDX
     inc AUDIO_NOTE_IDX
-    inc AUDIO_NOTE_IDX
 @done:
 	inc AUDIO_PATTERN_COUNTER
     lda AUDIO_PATTERN_COUNTER
+    ; if we get to 160 we loop!
     cmp #160
     beq :+
 	rts
@@ -44,11 +41,11 @@ doSilenceChannel:
 	sta $4000
     rts
 
-; the note bytes are in 00 and 01
+; the note period offset is in x
 doPlayNote:
-    lda $00
+    lda periodTableLo,x
     sta $4002
-    lda $01
+    lda periodTableHi,x
     ora #%10100000
 	sta $4003
 	lda #%10111111
@@ -76,33 +73,6 @@ periodTableHi:
 ; encoding a pattern
 .byte 160 ; pattern length
 pattern_addr:
-.byte 0, $7c, $01 ; at 0 play D3
-.byte 20, $0c, $01 ; at 20 play G#3
-.byte 40, $2d, $01 ; at 40 play F#3
-.byte 60, $00, $00 ; at 60 stop
-.byte 80, $7c, $01 ; at 80 play D3
-.byte 100, $00, $00 ; at 100 stop
-.byte 120, $c9, $00 ; at 120 play C#4
-.byte 140, $00, $00 ; at 140 stop
+; This is pattern 'Pattern 1' of song 'Song 1'
+.byte $00,$1D,$14,$23,$28,$21,$3C,$FF,$50,$1D,$64,$FF,$78,$28,$8C,$FF
 .byte $ff ; at 160 will loop
-
-
-; Project Version="2.1.0" TempoMode="FamiStudio" Name="Untitled" Author="Unknown"
-; 	Instrument Name="Instrument 1"
-; 		Envelope Type="DutyCycle" Length="1" Values="2"
-; 	Song Name="Song 1" Length="1" LoopPoint="0" PatternLength="16" BarLength="4" NoteLength="10"
-; 		Channel Type="Square1"
-; 			Pattern Name="Pattern 1"
-; 				Note Time="0" Value="D3" Instrument="Instrument 1"
-; 				Note Time="20" Value="G#3" Instrument="Instrument 1"
-; 				Note Time="40" Value="F#3" Instrument="Instrument 1"
-; 				Note Time="60" Value="Stop"
-; 				Note Time="80" Value="D3" Instrument="Instrument 1"
-; 				Note Time="100" Value="Stop"
-; 				Note Time="120" Value="C#4" Instrument="Instrument 1"
-; 				Note Time="140" Value="Stop"
-; 			PatternInstance Time="0" Pattern="Pattern 1"
-; 		Channel Type="Square2"
-; 		Channel Type="Triangle"
-; 		Channel Type="Noise"
-; 		Channel Type="DPCM"

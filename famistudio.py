@@ -24,6 +24,17 @@ class Note:
     value: str
     instrument: str
 
+    lookup = "A A# B C C# D D# E F F# G G#".split()
+
+    def bytes(self):
+        if self.value == "Stop":
+            offset = 255
+        else:
+            octave = int(self.value[-1]) - 1
+            note = int(Note.lookup.index(self.value[:-1]))
+            offset = octave * len(Note.lookup) + note
+        return self.time, offset
+
 
 @dataclass
 class PatternInstance:
@@ -121,3 +132,10 @@ class FamiStudioParser():
 
 parser = FamiStudioParser()
 parser.parse(sys.argv[1])
+for song in parser.project.songs:
+    for name, pattern in parser.project.songs[song].square1.patterns.items():
+        print(f"; This is pattern '{name}' of song '{song}'")
+        data = [b for note in pattern for b in note.bytes()]
+        while data:
+            print(f'.byte ' + ','.join(f'${x:02X}' for x in data[0:16]))
+            data = data[16:]
