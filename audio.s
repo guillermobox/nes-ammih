@@ -36,20 +36,35 @@ doTriggerAudio:
     jsr initializeAudioEngine
     rts
 
+doSilenceTriangular:
+	lda #$00
+	sta $4008
+    rts
+
 doSilenceChannel:
 	lda #%10110000
 	sta $4000
     rts
 
 ; the note period offset is in x
-doPlayNote:
+doPlayTriangularNote:
     lda periodTableLo,x
-    sta $4002
+    sta $400A
     lda periodTableHi,x
     ora #%10100000
-	sta $4003
-	lda #%10111111
-	sta $4000
+	sta $400B
+	lda #$ff
+	sta $4008
+    rts
+
+doPlayNote:
+    lda periodTableLo,x
+    sta $4002 ; TTTTTTTT (low bits of timer)
+    lda periodTableHi,x
+    ora #%00000000
+	sta $4003 ; LLLLL TTT (lenght counter load + high bits timer)
+	lda #%10111111 
+	sta $4000 ; DD L C VVVV (duty, length counter halt, constant vol, envelope)
     rts
 
        ; A   A#   B   C  C#   D  D#   E   F  F#   G  G#
