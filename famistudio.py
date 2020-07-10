@@ -24,16 +24,17 @@ class Note:
     value: str
     instrument: str
 
-    lookup = "A A# B C C# D D# E F F# G G#".split()
+    lookup = "C C# D D# E F F# G G# A A# B".split()
 
     def bytes(self):
+        yield self.time
         if self.value == "Stop":
             offset = 255
         else:
             octave = int(self.value[-1]) - 1
             note = int(Note.lookup.index(self.value[:-1]))
-            offset = octave * len(Note.lookup) + note
-        return self.time, offset
+            offset = octave * len(Note.lookup) + note + 3
+        yield offset
 
 
 @dataclass
