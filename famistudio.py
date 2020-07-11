@@ -148,3 +148,11 @@ for song in parser.project.songs.values():
             print(f'.byte ' + ','.join(f'${x:02X}' for x in data[0:16]))
             data = data[16:]
         print('.byte $FF')
+
+for song in parser.project.songs.values():
+    print('; square pattern instances')
+    for pattern in song.square1.instances:
+        print(pattern.time, pattern.pattern)
+
+    for pattern in song.triangle.instances:
+        print(pattern.time, pattern.pattern)
