@@ -23,7 +23,7 @@ ammih.nes prg.bin: cc65 chr.bin ammih.s initialize.s stages.s text.s chr.s input
 	cc65/bin/ca65 -g ammih.s
 	cc65/bin/ld65 --dbgfile ammih.dbg --config cc65/cfg/nes.cfg ammih.o -o ammih.nes
 
-chr.s chr.bin: tiles/chr.conf tiles/*.png venv
+chr.s chr.bin: tiles/chr.conf tiles/*.png venv/bin/python
 	./venv/bin/python tiler.py tiles/chr.conf
 
 version.s: encode
