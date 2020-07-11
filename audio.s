@@ -1,18 +1,67 @@
 initializeAudioEngine:
     lda #0
     sta AUDIO_PATTERN_COUNTER
-    sta AUDIO_NOTE_IDX
+    sta AUDIO_NOTE_SQUARE_IDX
+    sta AUDIO_NOTE_TRIANG_IDX
+    lda #<Song_1_Square_Pattern_1
+    sta MUSIC_SQUARE_PATTERN
+    lda #>Song_1_Square_Pattern_1
+    sta MUSIC_SQUARE_PATTERN + 1
+    lda #<Song_1_Triangle_Pattern_1
+    sta MUSIC_TRIANG_PATTERN
+    lda #>Song_1_Triangle_Pattern_1
+    sta MUSIC_TRIANG_PATTERN + 1
     rts
 
 doTriggerAudio:
-    ldx AUDIO_NOTE_IDX
+    jsr doTriggerSquareMusic
+    jsr doTriggerTriangleMusic
+	inc AUDIO_PATTERN_COUNTER
+    lda AUDIO_PATTERN_COUNTER
+    ; if we get to 160 we loop!
+    cmp #160
+    beq :+
+	rts
+:
+    jsr initializeAudioEngine
+    rts
+
+doTriggerTriangleMusic:
+    ldy AUDIO_NOTE_TRIANG_IDX
     ; load the trigger cycle of the actual note
-    lda pattern_addr, x
+    lda (MUSIC_TRIANG_PATTERN),y
     ; this might be FF, this never matches always leaves
     cmp AUDIO_PATTERN_COUNTER
     bne @done
     ; we found at X something to play, load the note offset
-    lda pattern_addr+1, x
+    iny
+    lda (MUSIC_TRIANG_PATTERN),y
+    tax
+    cpx #$ff
+    ; if we loaded a FF, this is a silence
+    bne :+
+        jsr doSilenceTriangular
+        jmp @consume
+    :
+    jsr doPlayTriangularNote
+@consume:
+    ; consume the audio pattern note
+    inc AUDIO_NOTE_TRIANG_IDX
+    inc AUDIO_NOTE_TRIANG_IDX
+@done:
+    rts
+
+
+doTriggerSquareMusic:
+    ldy AUDIO_NOTE_SQUARE_IDX
+    ; load the trigger cycle of the actual note
+    lda (MUSIC_SQUARE_PATTERN),y
+    ; this might be FF, this never matches always leaves
+    cmp AUDIO_PATTERN_COUNTER
+    bne @done
+    ; we found at X something to play, load the note offset
+    iny
+    lda (MUSIC_SQUARE_PATTERN),y
     tax
     cpx #$ff
     ; if we loaded a FF, this is a silence
@@ -23,18 +72,11 @@ doTriggerAudio:
     jsr doPlayNote
 @consume:
     ; consume the audio pattern note
-    inc AUDIO_NOTE_IDX
-    inc AUDIO_NOTE_IDX
+    inc AUDIO_NOTE_SQUARE_IDX
+    inc AUDIO_NOTE_SQUARE_IDX
 @done:
-	inc AUDIO_PATTERN_COUNTER
-    lda AUDIO_PATTERN_COUNTER
-    ; if we get to 160 we loop!
-    cmp #160
-    beq :+
-	rts
-:
-    jsr initializeAudioEngine
     rts
+
 
 doSilenceTriangular:
 	lda #$00
@@ -85,9 +127,11 @@ periodTableHi:
   .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00 ; 6
   .byte $00,$00,$00,$00,$00,$00,$00,$00                 ; 7
 
-; encoding a pattern
-.byte 160 ; pattern length
-pattern_addr:
-; This is pattern 'Pattern 1' of song 'Song 1'
+Song_1_Square_Pattern_1:
 .byte $00,$1D,$14,$23,$28,$21,$3C,$FF,$50,$1D,$64,$FF,$78,$28,$8C,$FF
-.byte $ff ; at 160 will loop
+.byte $FF
+Song_1_Triangle_Pattern_1:
+.byte $00,$2C,$05,$FF,$09,$2C,$0D,$FF,$14,$2C,$19,$FF,$1E,$2D,$24,$FF
+.byte $28,$2E,$2C,$FF,$32,$2F,$36,$FF,$50,$31,$56,$FF,$5A,$2F,$5F,$FF
+.byte $64,$2D,$69,$FF,$6E,$2B,$73,$FF
+.byte $FF
