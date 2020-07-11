@@ -16,12 +16,12 @@ initializeAudioEngine:
 doTriggerAudio:
     jsr doTriggerSquareMusic
     jsr doTriggerTriangleMusic
-	inc AUDIO_PATTERN_COUNTER
+    inc AUDIO_PATTERN_COUNTER
     lda AUDIO_PATTERN_COUNTER
     ; if we get to 160 we loop!
     cmp #160
     beq :+
-	rts
+    rts
 :
     jsr initializeAudioEngine
     rts
@@ -79,13 +79,13 @@ doTriggerSquareMusic:
 
 
 doSilenceTriangular:
-	lda #$00
-	sta $4008
+    lda #$00
+    sta $4008
     rts
 
 doSilenceChannel:
-	lda #%10110000
-	sta $4000
+    lda #%10110000
+    sta $4000
     rts
 
 ; the note period offset is in x
@@ -94,9 +94,9 @@ doPlayTriangularNote:
     sta $400A
     lda periodTableHi,x
     ora #%10100000
-	sta $400B
-	lda #$ff
-	sta $4008
+    sta $400B
+    lda #$ff
+    sta $4008
     rts
 
 doPlayNote:
@@ -104,9 +104,9 @@ doPlayNote:
     sta $4002 ; TTTTTTTT (low bits of timer)
     lda periodTableHi,x
     ora #%00000000
-	sta $4003 ; LLLLL TTT (lenght counter load + high bits timer)
-	lda #%10111111 
-	sta $4000 ; DD L C VVVV (duty, length counter halt, constant vol, envelope)
+    sta $4003 ; LLLLL TTT (lenght counter load + high bits timer)
+    lda #%10111111 
+    sta $4000 ; DD L C VVVV (duty, length counter halt, constant vol, envelope)
     rts
 
        ; A   A#   B   C  C#   D  D#   E   F  F#   G  G#
