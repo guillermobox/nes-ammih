@@ -10,7 +10,7 @@ void exit_with_usage(char *argv[]) {
 int main(int argc, char *argv[]) {
 	int opt, x, y, addr;
 
-        while ((opt = getopt(argc, argv, "h")) != -1) {
+	while ((opt = getopt(argc, argv, "h")) != -1) {
 		switch(opt) {
 			case 'h':
 			default:
