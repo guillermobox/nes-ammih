@@ -395,8 +395,8 @@ updateGameState:
 	lda STEPS_TAKEN
 	bne :+
 	; we died because of battery
-	; Y=1 loads a ran out of energy message
-	ldy #$01
+	; Y=2 loads a ran out of energy message
+	ldy #$02
 	jmp @died_return
 :
 	rts
@@ -406,20 +406,12 @@ updateGameState:
 	lda #GameStateFailure
 	sta GAME_STATE
 
-	cpy #$00
-	bne :+
-	lda #<ohman
+	; fetch the message
+	lda MESSAGES_TABLE,y
 	sta $00
-	lda #>ohman
-	sta $01
-	jmp @reasonShown
-	:
-	lda #<died_because_no_battery
-	sta $00
-	lda #>died_because_no_battery
+	lda MESSAGES_TABLE + 1,y
 	sta $01
 
-@reasonShown:
 	jsr doEnqueueTextMessage
 	lda #<msg_try_again
 	sta $00

@@ -21,6 +21,11 @@ doEnqueueTextMessage:
 	sta PPU_ENCODED_LEN
 	rts
 
+
+MESSAGES_TABLE:
+	.addr ohman
+	.addr died_because_no_battery
+
 ; input tile coordinates: x = 2 y = 2
 ; PPU nametable address: 0x2042
 msg_battery:
