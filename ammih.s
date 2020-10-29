@@ -373,6 +373,8 @@ updateGameState:
 	sta $01
 
 	; if any of them died, we died
+	; Y=0 loads a oh man you died message
+	ldy #$00
 	lda $00
 	cmp #$04
 	beq @died_return
@@ -392,17 +394,32 @@ updateGameState:
 @return:
 	lda STEPS_TAKEN
 	bne :+
+	; we died because of battery
+	; Y=1 loads a ran out of energy message
+	ldy #$01
 	jmp @died_return
 :
 	rts
 
+; use Y to provide the die reason
 @died_return:
 	lda #GameStateFailure
 	sta GAME_STATE
+
+	cpy #$00
+	bne :+
 	lda #<ohman
 	sta $00
 	lda #>ohman
 	sta $01
+	jmp @reasonShown
+	:
+	lda #<died_because_no_battery
+	sta $00
+	lda #>died_because_no_battery
+	sta $01
+
+@reasonShown:
 	jsr doEnqueueTextMessage
 	lda #<msg_try_again
 	sta $00

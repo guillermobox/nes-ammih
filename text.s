@@ -66,6 +66,12 @@ ohman:
 ; The string: "oh man you died"
 .byte $18,$11,$24,$16,$0a,$17,$24,$22,$18,$1e,$24,$0d,$12,$0e,$0d,$ff
 
+died_because_no_battery:
+.byte $23,$25
+; Encoded string produced by encode.c
+; The string: "you ran out of energy"
+.byte $22,$18,$1e,$24,$1b,$0a,$17,$24,$18,$1e,$1d,$24,$18,$0f,$24,$0e,$17,$0e,$1b,$10,$22,$ff
+
 welldone:
 .byte $23,$2b
 ; Encoded string produced by encode.c
