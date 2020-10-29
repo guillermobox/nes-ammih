@@ -3,17 +3,18 @@ initializeAudioEngine:
     sta AUDIO_PATTERN_COUNTER
     sta AUDIO_NOTE_SQUARE_IDX
     sta AUDIO_NOTE_TRIANG_IDX
-    lda #<Song_1_Square_Pattern_1
-    sta MUSIC_SQUARE_PATTERN
-    lda #>Song_1_Square_Pattern_1
-    sta MUSIC_SQUARE_PATTERN + 1
-    lda #<Song_1_Triangle_Pattern_1
-    sta MUSIC_TRIANG_PATTERN
-    lda #>Song_1_Triangle_Pattern_1
-    sta MUSIC_TRIANG_PATTERN + 1
+    ; lda #<Song_1_Square_Pattern_1
+    ; sta MUSIC_SQUARE_PATTERN
+    ; lda #>Song_1_Square_Pattern_1
+    ; sta MUSIC_SQUARE_PATTERN + 1
+    ; lda #<Song_1_Triangle_Pattern_1
+    ; sta MUSIC_TRIANG_PATTERN
+    ; lda #>Song_1_Triangle_Pattern_1
+    ; sta MUSIC_TRIANG_PATTERN + 1
     rts
 
 doTriggerAudio:
+    rts
     jsr doTriggerSquareMusic
     jsr doTriggerTriangleMusic
     inc AUDIO_PATTERN_COUNTER
@@ -126,12 +127,3 @@ periodTableHi:
   .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00 ; 5
   .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00 ; 6
   .byte $00,$00,$00,$00,$00,$00,$00,$00                 ; 7
-
-Song_1_Square_Pattern_1:
-.byte $00,$1D,$14,$23,$28,$21,$3C,$FF,$50,$1D,$64,$FF,$78,$28,$8C,$FF
-.byte $FF
-Song_1_Triangle_Pattern_1:
-.byte $00,$2C,$05,$FF,$09,$2C,$0D,$FF,$14,$2C,$19,$FF,$1E,$2D,$24,$FF
-.byte $28,$2E,$2C,$FF,$32,$2F,$36,$FF,$50,$31,$56,$FF,$5A,$2F,$5F,$FF
-.byte $64,$2D,$69,$FF,$6E,$2B,$73,$FF
-.byte $FF
