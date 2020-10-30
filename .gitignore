@@ -6,6 +6,6 @@ venv
 cc65
 ammih.nes
 chr.s
-version.s
+message.s
 encode
 settings.json
