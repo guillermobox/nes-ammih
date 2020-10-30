@@ -4,16 +4,19 @@
 #include <string.h>
 
 void exit_with_usage(char *argv[]) {
-	fprintf(stderr, "Usage: %s [-p PPUADDR] <x-coordinate> <y-coordinate>\n\nUse -p to provide ppu coordinates instead in hexadecimal\n\n", argv[0]);
+	fprintf(stderr, "Usage: %s -a [-p PPUADDR] <x-coordinate> <y-coordinate>\n\nUse -p to provide ppu coordinates instead in hexadecimal\nUse -a to output ascii instead of bytes\n", argv[0]);
 	exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[]) {
-	int opt, x, y, addr;
+	int opt, x, y, addr, ascii=0;
 	char * ppuaddr = NULL;
 
-	while ((opt = getopt(argc, argv, "hp:")) != -1) {
+	while ((opt = getopt(argc, argv, "hap:")) != -1) {
 		switch(opt) {
+			case 'a':
+				ascii = 1;
+				break;
 			case 'p':
 			    ppuaddr = strdup(optarg);
 				break;
@@ -40,6 +43,12 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		addr = 0x2000 + x + y * 0x20;
+
+		if (ascii == 0) {
+			fwrite((char*)&addr + 1, 1, sizeof(char), stdout);
+			fwrite((char*)&addr, 1, sizeof(char), stdout);
+			exit(EXIT_SUCCESS);
+		}
 	} else {
 		addr = strtol(ppuaddr, NULL, 16);
 		if (addr < 0x2000) {
@@ -52,6 +61,12 @@ int main(int argc, char *argv[]) {
 		}
 		x = addr % 0x20;
 		y = (addr - 0x2000 - x) / 0x20;
+		
+		if (ascii == 0) {
+			fwrite(&x, 1, sizeof(char), stdout);
+			fwrite(&y, 1, sizeof(char), stdout);
+			exit(EXIT_SUCCESS);
+		}
 	}
 
 	printf("; tile (%02d, %02d) == PPU $%04x\n", x, y, addr);
