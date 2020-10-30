@@ -26,5 +26,5 @@ ammih.nes prg.bin: cc65 chr.bin ammih.s initialize.s stages.s text.s chr.s input
 chr.s chr.bin: tiles/chr.conf tiles/*.png venv
 	./venv/bin/python tiler.py tiles/chr.conf
 
-#version.s: encode
-#	git rev-parse --short HEAD | ./encode > version.s
+message.s: message.py encode message.yaml venv
+	./venv/bin/python message.py > message.s
