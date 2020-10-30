@@ -144,59 +144,27 @@ enterBulkLoadRoutine:
 bulkLoadEndScreen:
 	jsr clearField
 
-	lda #<congrats1
-	sta $00
-	lda #>congrats1
-	sta $01
-	jsr doEnqueueTextMessage
-
-	lda #<congrats2
-	sta $00
-	lda #>congrats2
-	sta $01
-	jsr doEnqueueTextMessage
-
-	lda #<congrats3
-	sta $00
-	lda #>congrats3
-	sta $01
-	jsr doEnqueueTextMessage
-
-	lda #<msg_start
-	sta $00
-	lda #>msg_start
-	sta $01
-	jsr doEnqueueTextMessage
+	ldy #MSG_CONGRATS1
+	jsr doEnqueueMessage
+	ldy #MSG_CONGRATS2
+	jsr doEnqueueMessage
+	ldy #MSG_CONGRATS3
+	jsr doEnqueueMessage
+	ldy #MSG_PRESS_START_CONTINUE
+	jsr doEnqueueMessage
 
 	rts
 
 bulkLoadTitleScreen:
 	jsr clearField
-	lda #<msg
-	sta $00
-	lda #>msg
-	sta $01
-	jsr doEnqueueTextMessage
-	lda #<msg_title
-	sta $00
-	lda #>msg_title
-	sta $01
-	jsr doEnqueueTextMessage
-	lda #<msg_title2
-	sta $00
-	lda #>msg_title2
-	sta $01
-	jsr doEnqueueTextMessage
-	lda #<msg_title3
-	sta $00
-	lda #>msg_title3
-	sta $01
-	jsr doEnqueueTextMessage
-	lda #<msg_start
-	sta $00
-	lda #>msg_start
-	sta $01
-	jsr doEnqueueTextMessage
+	ldy #MSG_AMMIH
+	jsr doEnqueueMessage
+	ldy #MSG_TITLE1
+	jsr doEnqueueMessage
+	ldy #MSG_TITLE2
+	jsr doEnqueueMessage
+	ldy #MSG_PRESS_START_CONTINUE
+	jsr doEnqueueMessage
 	rts
 	
 bulkLoadStage:
@@ -374,7 +342,7 @@ updateGameState:
 
 	; if any of them died, we died
 	; Y=0 loads a oh man you died message
-	ldy #$00
+	ldy #MSG_OHMAN
 	lda $00
 	cmp #$04
 	beq @died_return
@@ -396,7 +364,7 @@ updateGameState:
 	bne :+
 	; we died because of battery
 	; Y=2 loads a ran out of energy message
-	ldy #$02
+	ldy #MSG_NOENERGY
 	jmp @died_return
 :
 	rts
@@ -406,18 +374,11 @@ updateGameState:
 	lda #GameStateFailure
 	sta GAME_STATE
 
-	; fetch the message
-	lda MESSAGES_TABLE,y
-	sta $00
-	lda MESSAGES_TABLE + 1,y
-	sta $01
+	; fetch the message in Y
+	jsr doEnqueueMessage
 
-	jsr doEnqueueTextMessage
-	lda #<msg_try_again
-	sta $00
-	lda #>msg_try_again
-	sta $01
-	jsr doEnqueueTextMessage
+	ldy #MSG_PRESS_START_TRY
+	jsr doEnqueueMessage
 	rts
 @victory_return:
 	lda #GameStateVictory
@@ -426,12 +387,8 @@ updateGameState:
 	sta $00
 	lda #>welldone
 	sta $01
-	jsr doEnqueueTextMessage
-	lda #<msg_press_start
-	sta $00
-	lda #>msg_press_start
-	sta $01
-	jsr doEnqueueTextMessage
+	ldy #MSG_PRESS_START_CONTINUE
+	jsr doEnqueueMessage
 	rts
 
 clearField:
