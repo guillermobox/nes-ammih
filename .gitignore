@@ -8,4 +8,5 @@ ammih.nes
 chr.s
 message.s
 encode
+translate
 settings.json
