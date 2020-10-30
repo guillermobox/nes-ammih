@@ -53,7 +53,7 @@ print("MESSAGES_TABLE:")
 symbols = [msg.name for msg in addrs.values()]
 line = []
 while symbols:
-    line.append(symbols.pop())
+    line.append(symbols.pop(0))
     if sum(map(len, line)) > 30:
         print(f".addr {','.join(line)}")
         line = []
