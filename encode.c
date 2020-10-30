@@ -9,12 +9,12 @@ void validate_string(char *input)
 		c = tolower(*input++);
 		if (c == ' ' || isalpha(c) || isdigit(c))
 			continue;
-		printf("Character: '%c' (%d) is not supported\n", c, c);
+		fprintf(stderr, "Character: '%c' (%d) is not supported\n", c, c);
 		exit(1);
 	};
-};
+}
 
-int main(int argc, char *argv)
+int main(int argc, char *argv[])
 {
 	ssize_t read;
 	size_t size = 0;
@@ -22,7 +22,7 @@ int main(int argc, char *argv)
 
 	read = getline(&input, &size, stdin);
 	if (read < 0) {
-		printf("Error reading input\n");
+		fprintf(stderr, "Error reading input\n");
 		exit(1);
 	};
 	while (isspace(input[read - 1])) {
@@ -32,20 +32,16 @@ int main(int argc, char *argv)
 
 	validate_string(input);
 
-	printf("; Encoded string produced by encode.c\n");
-	printf("; The string: \"%s\"\n", input);
-	printf(".byte ");
 	while (*input) {
-		int val;
+		char output;
 		if (*input == ' ')
-			val = 0x24;
+			output = 0x24;
 		else if (isalpha(*input))
-			val = (tolower(*input) - 'a') + 0x0a;
+			output = (tolower(*input) - 'a') + 0x0a;
 		else if (isdigit(*input))
-			val = ((*input) - '0');
-		printf("$%02x,", val);
+			output = ((*input) - '0');
+		fwrite(&output, 1, 1, stdout);
 		input++;
 	};
-	printf("$ff\n");
 	return 0;
-};
+}
