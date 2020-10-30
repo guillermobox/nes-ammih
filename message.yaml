@@ -1,0 +1,7 @@
+- name: ohman
+  text: oh man you died
+  tile: 9 25
+- name: noenergy
+  text: you ran out of energy
+  row: 25
+
