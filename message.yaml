@@ -1,39 +1,40 @@
 - name: title1
   text: homebew for nes
-  location: center 14
+  row: 14
 - name: title2
   text: still in development
-  location: center 16
+  row: 16
 - name: start
   text: press start
-  location: center 25
+  row: 25
 - name: ammih
   text: a match made in heaven
-  location: center 4
+  row: 4
 - name: welldone
   text: well done
-  location: center 25
+  row: 25
 - name: press_start_try
   text: press start to try again
-  location: center 27
+  row: 27
 - name: press_start_continue
   text: press start to continue
-  location: center 27
+  row: 27
 - name: congrats1
   text: congratulations you did it
-  location: center 11
+  row: 11
 - name: congrats2
   text: ask guillermo
-  location: center 16
+  row: 16
 - name: congrats3
   text: for more levels
-  location: center 18
+  row: 18
 - name: ohman
   text: oh man you died
-  location: center 25
+  row: 25
 - name: noenergy
   text: you ran out of energy
-  location: center 25
+  row: 25
 - name: ui_energy
   text: energy
-  location: 2 3
+  row: 3
+  col: 2
