@@ -9,7 +9,8 @@ void validate_string(char *input)
 		c = tolower(*input++);
 		if (c == ' ' || isalpha(c) || isdigit(c))
 			continue;
-		fprintf(stderr, "Character: '%c' (%d) is not supported\n", c, c);
+		fprintf(stderr, "Character: '%c' (%d) is not supported\n", c,
+			c);
 		exit(1);
 	};
 }
