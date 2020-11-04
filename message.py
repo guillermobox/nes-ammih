@@ -27,6 +27,23 @@ class Message:
             return self.row, col
         return self.row, self.col
 
+    @property
+    def payload(self):
+        loc = msg.coordinates
+        p = subprocess.run(
+            ["./translate", str(loc[0]), str(loc[1])], capture_output=True
+        )
+        payload = b""
+        if p.returncode == 0:
+            payload += p.stdout
+
+        p = subprocess.run(
+            ["./encode"], input=msg.text.encode("ascii"), capture_output=True
+        )
+        if p.returncode == 0:
+            payload += p.stdout + b"\xff"
+        return payload
+
 
 addrs = {}
 data = yaml.safe_load(open("message.yaml", "r").read())
@@ -34,17 +51,7 @@ msgs = [Message(**row) for row in data]
 for msg in msgs:
     addrs[msg.name] = msg
     print(f"{msg.name}:")
-
-    loc = msg.coordinates
-    p = subprocess.run(["./translate", str(loc[0]), str(loc[1])], capture_output=True)
-    if p.returncode == 0:
-        print(to_ac65(p.stdout), end="")
-
-    p = subprocess.run(
-        ["./encode"], input=msg.text.encode("ascii"), capture_output=True
-    )
-    if p.returncode == 0:
-        print(to_ac65(p.stdout + b"\xff"), end="")
+    print(to_ac65(msg.payload), end="")
     print()
 
 print("MESSAGES_TABLE:")
