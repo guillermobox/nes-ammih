@@ -5,7 +5,7 @@ now and then.
 
 ## General
 
-- Remove the cc65 dependency with a personal assembler
+- Remove the cc65 dependency with an in-house assembler
 
 ## Graphics
 
