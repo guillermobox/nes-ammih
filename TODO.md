@@ -6,6 +6,9 @@ now and then. It's probably outdated already.
 ## General
 
 - Remove the cc65 dependency by providing an in-house assembler
+- Homogeneize the variable and label names
+- Rewrite stage.s, it's quite confusing and unstructured
+- Visualize the distribution of the code, routines, and variables
 
 ## Gameplay
 
@@ -36,3 +39,4 @@ The audio engine is designed around famistudio:
 ## Text
 
 - Change format to have length instead of 0xff as an end character
+- Introduce text that appears in the screen letter by letter
