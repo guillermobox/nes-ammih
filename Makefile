@@ -11,6 +11,7 @@ cc65:
 
 clean:
 	rm -f chr.s chr.bin prg.bin ammih.nes ammih.dbg *.o encode translate
+	rm -f message.s stages_data.s
 
 purge: clean
 	rm -rf venv cc65

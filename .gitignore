@@ -8,6 +8,7 @@ cc65
 ammih.nes
 chr.s
 message.s
+stages_data.s
 encode
 translate
 settings.json
