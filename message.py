@@ -16,6 +16,15 @@ def to_ac65(data, width=8):
     return ret
 
 
+def encode_char(ch):
+    if ch == ' ':
+        return b'\x24'
+    elif ch.isdigit():
+        return bytes([ord(ch) - ord('0')])
+    elif ch.isalpha():
+        return bytes([(ord(ch) - ord('a')) + 0x0a])
+
+
 @dataclass
 class Message:
     name: str
@@ -35,12 +44,8 @@ class Message:
         loc = msg.coordinates
         ppu_address = to_ppu(loc[0], loc[1])
         payload = struct.pack(">h", ppu_address)
-
-        p = subprocess.run(
-            ["./encode"], input=msg.text.encode("ascii"), capture_output=True
-        )
-        if p.returncode == 0:
-            payload += p.stdout + b"\xff"
+        payload += b''.join(encode_char(c) for c in msg.text)
+        payload += b'\xff'
         return payload
 
 

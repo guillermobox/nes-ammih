@@ -1,8 +1,7 @@
-.PHONY: clean purge all tools toolchains
+.PHONY: clean purge all toolchains
 
 all: ammih.nes
 
-tools: encode
 toolchains: cc65 venv
 
 cc65:
@@ -10,7 +9,7 @@ cc65:
 	cd cc65/src && make ../bin/ca65 ../bin/ld65
 
 clean:
-	rm -f chr.s chr.bin prg.bin ammih.nes ammih.dbg *.o encode 
+	rm -f chr.s chr.bin prg.bin ammih.nes ammih.dbg *.o
 	rm -f message.s stages_data.s
 
 purge: clean
@@ -27,7 +26,7 @@ ammih.nes prg.bin: cc65 chr.bin ammih.s initialize.s stages.s text.s chr.s input
 chr.s chr.bin: tiles/chr.conf tiles/*.png venv
 	./venv/bin/python tiler.py tiles/chr.conf
 
-message.s: message.py encode message.yaml venv
+message.s: message.py message.yaml venv
 	./venv/bin/python message.py > message.s
 
 stages_data.s: venv stages.yaml
