@@ -2,7 +2,10 @@ from dataclasses import dataclass
 import io
 import re
 import subprocess
+import struct
 import yaml
+
+from asset_compiler.translate import to_ppu
 
 
 def to_ac65(data, width=8):
@@ -30,12 +33,8 @@ class Message:
     @property
     def payload(self):
         loc = msg.coordinates
-        p = subprocess.run(
-            ["./translate", str(loc[0]), str(loc[1])], capture_output=True
-        )
-        payload = b""
-        if p.returncode == 0:
-            payload += p.stdout
+        ppu_address = to_ppu(loc[0], loc[1])
+        payload = struct.pack(">h", ppu_address)
 
         p = subprocess.run(
             ["./encode"], input=msg.text.encode("ascii"), capture_output=True
