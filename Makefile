@@ -19,7 +19,7 @@ venv:
 	python3 -m venv venv
 	./venv/bin/pip install -r requirements.txt
 
-ammih.nes prg.bin: cc65 chr.bin ammih.s initialize.s stages.s text.s chr.s input.s rendering.s audio.s message.s
+ammih.nes prg.bin: cc65 chr.bin ammih.s initialize.s stages.s text.s chr.s input.s rendering.s audio.s message.s stages_data.s
 	cc65/bin/ca65 -g ammih.s
 	cc65/bin/ld65 --dbgfile ammih.dbg --config cc65/cfg/nes.cfg ammih.o -o ammih.nes
 
@@ -28,3 +28,6 @@ chr.s chr.bin: tiles/chr.conf tiles/*.png venv
 
 message.s: message.py encode translate message.yaml venv
 	./venv/bin/python message.py > message.s
+
+stages_data.s: venv stages.yaml
+	./venv/bin/python -m asset_compiler.stage stages.yaml > stages_data.s
