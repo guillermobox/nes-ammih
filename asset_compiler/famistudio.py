@@ -133,28 +133,32 @@ class FamiStudioParser:
         )
 
 
-parser = FamiStudioParser()
-parser.parse(sys.argv[1])
-for song in parser.project.songs.values():
-    for name, pattern in song.square1.patterns.items():
-        print(f"{song.name} Square {name}:".replace(" ", "_"))
-        data = [b for note in pattern for b in note.bytes()]
-        while data:
-            print(f".byte " + ",".join(f"${x:02X}" for x in data[0:16]))
-            data = data[16:]
-        print(".byte $FF")
-    for name, pattern in song.triangle.patterns.items():
-        print(f"{song.name} Triangle {name}:".replace(" ", "_"))
-        data = [b for note in pattern for b in note.bytes()]
-        while data:
-            print(f".byte " + ",".join(f"${x:02X}" for x in data[0:16]))
-            data = data[16:]
-        print(".byte $FF")
+def main():
+    parser = FamiStudioParser()
+    parser.parse(sys.argv[1])
+    for song in parser.project.songs.values():
+        for name, pattern in song.square1.patterns.items():
+            print(f"{song.name} Square {name}:".replace(" ", "_"))
+            data = [b for note in pattern for b in note.bytes()]
+            while data:
+                print(f".byte " + ",".join(f"${x:02X}" for x in data[0:16]))
+                data = data[16:]
+            print(".byte $FF")
+        for name, pattern in song.triangle.patterns.items():
+            print(f"{song.name} Triangle {name}:".replace(" ", "_"))
+            data = [b for note in pattern for b in note.bytes()]
+            while data:
+                print(f".byte " + ",".join(f"${x:02X}" for x in data[0:16]))
+                data = data[16:]
+            print(".byte $FF")
 
-for song in parser.project.songs.values():
-    print("; square pattern instances")
-    for pattern in song.square1.instances:
-        print(pattern.time, pattern.pattern)
+    for song in parser.project.songs.values():
+        print("; square pattern instances")
+        for pattern in song.square1.instances:
+            print(pattern.time, pattern.pattern)
 
-    for pattern in song.triangle.instances:
-        print(pattern.time, pattern.pattern)
+        for pattern in song.triangle.instances:
+            print(pattern.time, pattern.pattern)
+
+if __name__ == '__main__':
+    main()

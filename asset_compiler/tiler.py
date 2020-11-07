@@ -1,4 +1,3 @@
-import argparse
 import configparser
 import struct
 import sys
@@ -148,13 +147,9 @@ class Tileset:
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("configuration")
-    args = parser.parse_args()
-
+    configfile = sys.argv[1]
     cfg = configparser.ConfigParser()
-    cfg.read(args.configuration)
+    cfg.read(configfile)
 
     tilesets = [
         Tileset.from_section(cfg[section], Path(sys.argv[1]).parent)

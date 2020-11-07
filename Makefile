@@ -24,10 +24,10 @@ ammih.nes prg.bin: cc65 chr.bin ammih.s initialize.s stages.s text.s chr.s input
 	cc65/bin/ld65 --dbgfile ammih.dbg --config cc65/cfg/nes.cfg ammih.o -o ammih.nes
 
 chr.s chr.bin: tiles/chr.conf tiles/*.png venv
-	./venv/bin/python -m asset_compiler.tiler tiles/chr.conf
+	venv/bin/python -m asset_compiler.tiler tiles/chr.conf
 
 message.s: venv message.yaml
-	./venv/bin/python -m asset_compiler.message message.yaml > message.s
+	venv/bin/python -m asset_compiler.message message.yaml > message.s
 
 stages_data.s: venv stages.yaml
-	./venv/bin/python -m asset_compiler.stage stages.yaml > stages_data.s
+	venv/bin/python -m asset_compiler.stage stages.yaml > stages_data.s

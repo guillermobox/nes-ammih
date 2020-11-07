@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 import io
-import re
-import subprocess
 import struct
 import sys
 import yaml
@@ -35,36 +33,43 @@ class Message:
 
     @property
     def payload(self):
-        loc = msg.coordinates
+        loc = self.coordinates
         ppu_address = to_ppu(loc[0], loc[1])
         payload = struct.pack(">h", ppu_address)
-        payload += bytes(encode_char(c) for c in msg.text)
+        payload += bytes(encode_char(c) for c in self.text)
         payload += b"\xff"
         return payload
 
 
-addrs = {}
-data = yaml.safe_load(open(sys.argv[1], "r").read())
-msgs = [Message(**row) for row in data]
-for msg in msgs:
-    addrs[msg.name] = msg
-    print(f"{msg.name}:")
-    print(to_ac65(msg.payload), end="")
+def main():
+    addrs = {}
+    data = yaml.safe_load(open(sys.argv[1], "r").read())
+    msgs = [Message(**row) for row in data]
+    for msg in msgs:
+        addrs[msg.name] = msg
+        print(f"{msg.name}:")
+        print(to_ac65(msg.payload), end="")
+        print()
+
+    print("MESSAGES_TABLE:")
+
+    symbols = [msg.name for msg in addrs.values()]
+    line = []
+    while symbols:
+        line.append(symbols.pop(0))
+        if sum(map(len, line)) > 30:
+            print(f".addr {','.join(line)}")
+            line = []
+    if line:
+        print(f".addr {','.join(line)}")
     print()
 
-print("MESSAGES_TABLE:")
+    maxlen = max(map(len, addrs.keys()))
+    for i, msg in enumerate(addrs.values()):
+        print(
+            f"MSG_{msg.name.upper():{maxlen}} = {2*i} ; {msg.text} @ {msg.row} {msg.col}"
+        )
 
-symbols = [msg.name for msg in addrs.values()]
-line = []
-while symbols:
-    line.append(symbols.pop(0))
-    if sum(map(len, line)) > 30:
-        print(f".addr {','.join(line)}")
-        line = []
-if line:
-    print(f".addr {','.join(line)}")
-print()
 
-maxlen = max(map(len, addrs.keys()))
-for i, msg in enumerate(addrs.values()):
-    print(f"MSG_{msg.name.upper():{maxlen}} = {2*i} ; {msg.text} @ {msg.row} {msg.col}")
+if __name__ == "__main__":
+    main()
