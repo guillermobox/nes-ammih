@@ -6,7 +6,7 @@ from pathlib import Path
 from PIL import Image
 
 
-with open("mesen.pal", "rb") as fh:
+with open(Path(__file__).parent / "mesen.pal", "rb") as fh:
     MESEN_PALETTE = list(struct.iter_unpack("BBB", fh.read()))
 
 
