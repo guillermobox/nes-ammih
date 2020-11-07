@@ -1,2 +1,2 @@
 Pillow
-pyyaml
+PyYAML --no-binary=PyYAML
