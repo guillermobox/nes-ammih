@@ -11,12 +11,12 @@ from asset_compiler.serialize import to_ac65
 
 
 def encode_char(ch):
-    if ch == ' ':
-        return b'\x24'
+    if ch == " ":
+        return b"\x24"
     elif ch.isdigit():
-        return bytes([ord(ch) - ord('0')])
+        return bytes([ord(ch) - ord("0")])
     elif ch.isalpha():
-        return bytes([(ord(ch) - ord('a')) + 0x0a])
+        return bytes([(ord(ch) - ord("a")) + 0x0A])
 
 
 @dataclass
@@ -38,8 +38,8 @@ class Message:
         loc = msg.coordinates
         ppu_address = to_ppu(loc[0], loc[1])
         payload = struct.pack(">h", ppu_address)
-        payload += b''.join(encode_char(c) for c in msg.text)
-        payload += b'\xff'
+        payload += b"".join(encode_char(c) for c in msg.text)
+        payload += b"\xff"
         return payload
 
 

@@ -1,4 +1,3 @@
-
 def to_ac65(data, width=8):
     ret = ""
     while data:
