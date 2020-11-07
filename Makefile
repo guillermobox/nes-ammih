@@ -26,8 +26,8 @@ ammih.nes prg.bin: cc65 chr.bin ammih.s initialize.s stages.s text.s chr.s input
 chr.s chr.bin: tiles/chr.conf tiles/*.png venv
 	./venv/bin/python tiler.py tiles/chr.conf
 
-message.s: message.py message.yaml venv
-	./venv/bin/python message.py > message.s
+message.s: venv message.yaml
+	./venv/bin/python -m asset_compiler.message message.yaml > message.s
 
 stages_data.s: venv stages.yaml
 	./venv/bin/python -m asset_compiler.stage stages.yaml > stages_data.s

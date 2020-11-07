@@ -3,17 +3,11 @@ import io
 import re
 import subprocess
 import struct
+import sys
 import yaml
 
 from asset_compiler.translate import to_ppu
-
-
-def to_ac65(data, width=8):
-    ret = ""
-    while data:
-        ret += ".byte " + ",".join(f"${x:02X}" for x in data[0:width]) + "\n"
-        data = data[width:]
-    return ret
+from asset_compiler.serialize import to_ac65
 
 
 def encode_char(ch):
@@ -50,7 +44,7 @@ class Message:
 
 
 addrs = {}
-data = yaml.safe_load(open("message.yaml", "r").read())
+data = yaml.safe_load(open(sys.argv[1], "r").read())
 msgs = [Message(**row) for row in data]
 for msg in msgs:
     addrs[msg.name] = msg
