@@ -10,6 +10,9 @@ now and then. It's probably outdated already.
 - Rewrite stage.s, it's quite confusing and unstructured
 - Visualize the distribution of the code, routines, and variables
 - Finish the stage designer to be part of the main code
+- Homogeinize the asset compilers and asset compiled
+- Think about a better format for stages rather than yaml
+- Change the format for the tiles from configuration to yaml
 
 ## Gameplay
 
