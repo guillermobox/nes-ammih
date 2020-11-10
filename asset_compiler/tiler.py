@@ -1,6 +1,7 @@
 import configparser
 import struct
 import sys
+import yaml
 from pathlib import Path
 from PIL import Image
 
@@ -94,10 +95,10 @@ class Tileset:
 
     @classmethod
     def from_section(cls, section, workdir):
-        if section.name == "@SOLID@":
+        if section["file"] == "SOLID":
             return cls("solid", [SolidTile(value) for value in range(4)])
 
-        path = str(workdir / section.name)
+        path = str(workdir / section["file"])
 
         path = Path(path)
         img = Image.open(path)
@@ -148,12 +149,11 @@ class Tileset:
 
 def main():
     configfile = sys.argv[1]
-    cfg = configparser.ConfigParser()
-    cfg.read(configfile)
+    with open(configfile, "r") as fh:
+        cfg = yaml.safe_load(fh)
 
     tilesets = [
-        Tileset.from_section(cfg[section], Path(sys.argv[1]).parent)
-        for section in cfg.sections()
+        Tileset.from_section(section, Path(sys.argv[1]).parent) for section in cfg
     ]
 
     chr = bytearray(8192)

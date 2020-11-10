@@ -1,0 +1,11 @@
+- file: font.png
+  color3: "#fffeff"
+- file: SOLID
+- file: robot.png
+  order: column
+- file: terminal.png
+- file: ground.png
+- file: box.png
+- file: deadlyground.png
+- file: batteryfull.png
+- file: floor.png

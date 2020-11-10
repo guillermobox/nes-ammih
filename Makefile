@@ -29,7 +29,7 @@ ammih.nes: cc65 $(ASSETS) $(SOURCES)
 
 $(ASSETS): venv
 
-assets/chr.s assets/chr.bin: assets/chr.conf assets/*.png
+assets/chr.s assets/chr.bin: assets/chr.yaml assets/*.png
 	$(PYTHON) -m asset_compiler.tiler $<
 
 assets/messages.s: assets/messages.yaml
