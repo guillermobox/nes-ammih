@@ -160,5 +160,6 @@ def main():
         for pattern in song.triangle.instances:
             print(pattern.time, pattern.pattern)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
