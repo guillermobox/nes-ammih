@@ -13,6 +13,7 @@ now and then. It's probably outdated already.
 - Homogeinize the asset compilers and asset compiled
 - Think about a better format for stages rather than yaml
 - Change the format for the tiles from configuration to yaml
+- Use click instead of argparse for all the asset compiler modules
 
 ## Gameplay
 
