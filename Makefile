@@ -30,10 +30,10 @@ ammih.nes: cc65 $(ASSETS) $(SOURCES)
 $(ASSETS): venv
 
 assets/chr.s assets/chr.bin: assets/chr.yaml assets/*.png
-	$(PYTHON) -m asset_compiler.tiler $<
+	$(PYTHON) -m asset_compiler.chr $<
 
 assets/messages.s: assets/messages.yaml
-	$(PYTHON) -m asset_compiler.message $< > $@
+	$(PYTHON) -m asset_compiler.messages $< > $@
 
 assets/stages.s: assets/stages.yaml
-	$(PYTHON) -m asset_compiler.stage $< > $@
+	$(PYTHON) -m asset_compiler.stages $< > $@
