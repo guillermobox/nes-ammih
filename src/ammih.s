@@ -66,7 +66,7 @@ DPAD_LEFT       = %00000010
 DPAD_RIGHT      = %00000001
 DPAD_START      = %00010000
 
-.include "chr.s"
+.include "assets/chr.s"
 
 .segment "CODE"
 nmi:
@@ -576,5 +576,5 @@ reset:
 .segment "STARTUP" ; eliminates warning
 
 .segment "CHARS"
-.incbin "chr.bin"
+.incbin "assets/chr.bin"
 

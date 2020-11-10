@@ -659,4 +659,4 @@ stageTileType:
 	lda #$04
 	rts
 
-.include "stages_data.s"
+.include "assets/stages.s"

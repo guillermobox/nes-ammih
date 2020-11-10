@@ -162,7 +162,7 @@ def main():
     names = [f"METATILE_{tileset.name.upper()}" for tileset in tilesets]
     maxlen = max(len(name) for name in names)
 
-    with open("chr.s", "w") as fh:
+    with open("assets/chr.s", "w") as fh:
         for tileset, name in zip(tilesets, names):
             fh.write(f"{name.ljust(maxlen)} = ${offset >> 4:02x}")
             if tileset.palette:
@@ -174,7 +174,7 @@ def main():
             chr[offset : offset + length] = encoded
             offset += length
 
-    Path("chr.bin").write_bytes(chr)
+    Path("assets/chr.bin").write_bytes(chr)
 
 
 if __name__ == "__main__":

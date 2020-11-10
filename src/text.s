@@ -28,4 +28,4 @@ doEnqueueTextMessage:
 	sta PPU_ENCODED_LEN
 	rts
 
-.include "message.s"
+.include "assets/messages.s"
