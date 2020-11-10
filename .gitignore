@@ -1,4 +1,5 @@
 __pycache__
+.vscode
 .*.swp
 *.bin
 *.o
@@ -6,9 +7,4 @@ __pycache__
 venv
 cc65
 ammih.nes
-chr.s
-message.s
-stages_data.s
-encode
-translate
-settings.json
+assets/*.s
