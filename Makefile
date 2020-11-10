@@ -32,7 +32,7 @@ $(ASSETS): venv
 assets/chr.s assets/chr.bin: assets/chr.conf assets/*.png
 	$(PYTHON) -m asset_compiler.tiler $<
 
-assets/messages.s: assets/message.yaml
+assets/messages.s: assets/messages.yaml
 	$(PYTHON) -m asset_compiler.message $< > $@
 
 assets/stages.s: assets/stages.yaml
