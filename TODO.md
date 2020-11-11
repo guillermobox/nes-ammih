@@ -14,6 +14,7 @@ now and then. It's probably outdated already.
 - Think about a better format for stages rather than yaml
 - Change the format for the tiles from configuration to yaml
 - Use click instead of argparse for all the asset compiler modules
+- Update the serialize module to allow for comments in symbols
 
 ## Gameplay
 

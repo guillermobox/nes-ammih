@@ -5,7 +5,11 @@ import sys
 import yaml
 
 from asset_compiler.translate import to_ppu
-from asset_compiler.serialize import to_ac65
+from asset_compiler.serialize import (
+    print_address_table,
+    print_data,
+    print_symbols,
+)
 
 
 def encode_char(ch):
@@ -47,28 +51,13 @@ def main():
     msgs = [Message(**row) for row in data]
     for msg in msgs:
         addrs[msg.name] = msg
-        print(f"{msg.name}:")
-        print(to_ac65(msg.payload), end="")
-        print()
-
-    print("MESSAGES_TABLE:")
+        print_data(msg.name, msg.payload)
 
     symbols = [msg.name for msg in addrs.values()]
-    line = []
-    while symbols:
-        line.append(symbols.pop(0))
-        if sum(map(len, line)) > 30:
-            print(f".addr {','.join(line)}")
-            line = []
-    if line:
-        print(f".addr {','.join(line)}")
-    print()
+    print_address_table("MESSAGES_TABLE", symbols)
 
-    maxlen = max(map(len, addrs.keys()))
-    for i, msg in enumerate(addrs.values()):
-        print(
-            f"MSG_{msg.name.upper():{maxlen}} = {2*i} ; {msg.text} @ {msg.row} {msg.col}"
-        )
+    symbols = {f"MSG_{msg.name.upper()}": 2 * i for i, msg in enumerate(addrs.values())}
+    print_symbols(symbols)
 
 
 if __name__ == "__main__":

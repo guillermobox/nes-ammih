@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 import sys
 import yaml
 
-from asset_compiler.serialize import to_ac65
+from asset_compiler.serialize import print_address_table, print_data, print_symbols
 
 
 @dataclass
@@ -28,18 +28,13 @@ def main():
         data = yaml.safe_load(fh)
 
     stages = [Stage(**stage) for stage in data]
+    addrs = [f"stage_{n:03}" for n, _ in enumerate(stages)]
 
-    print("numberOfStages:")
-    print(f".byte ${len(stages):02X}")
-    print()
-    print(f"stagesLookUpTable:")
-    for n, _ in enumerate(stages):
-        print(f".addr stage_{n:03}")
-    print()
+    print_data("numberOfStages", [len(stages)])
+    print_address_table("stagesLookUpTable", addrs)
 
-    for n, stage in enumerate(stages):
-        print(f"stage_{n:03}:")
-        print(to_ac65(stage.payload()))
+    for addr, stage in zip(addrs, stages):
+        print_data(addr, stage.payload())
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ import yaml
 from pathlib import Path
 from PIL import Image
 
+from asset_compiler.serialize import print_symbols
 
 with open(Path(__file__).parent / "mesen.pal", "rb") as fh:
     MESEN_PALETTE = list(struct.iter_unpack("BBB", fh.read()))
@@ -162,17 +163,15 @@ def main():
     names = [f"METATILE_{tileset.name.upper()}" for tileset in tilesets]
     maxlen = max(len(name) for name in names)
 
+    symbols = {}
     with open("assets/chr.s", "w") as fh:
         for tileset, name in zip(tilesets, names):
-            fh.write(f"{name.ljust(maxlen)} = ${offset >> 4:02x}")
-            if tileset.palette:
-                formatted_palette = ",".join(f"${p:02x}" for p in tileset.palette)
-                fh.write(f" ; palette: {formatted_palette}")
-            fh.write("\n")
+            symbols[name] = offset >> 4
             encoded = tileset.encode()
             length = len(encoded)
             chr[offset : offset + length] = encoded
             offset += length
+        print_symbols(symbols, file=fh)
 
     Path("assets/chr.bin").write_bytes(chr)
 
