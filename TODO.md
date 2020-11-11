@@ -3,18 +3,21 @@
 As I barely work in this project I have a TODO list here that I update every
 now and then. It's probably outdated already.
 
-## General
+## Source
 
 - Remove the cc65 dependency by providing an in-house assembler
 - Homogeneize the variable and label names
 - Rewrite stage.s, it's quite confusing and unstructured
 - Visualize the distribution of the code, routines, and variables
-- Finish the stage designer to be part of the main code
+
+## Asset compiler
+
+- Rename the package
 - Homogeinize the asset compilers and asset compiled
 - Think about a better format for stages rather than yaml
-- Change the format for the tiles from configuration to yaml
 - Use click instead of argparse for all the asset compiler modules
 - Update the serialize module to allow for comments in symbols
+- Finish the stage designer to be part of the main code
 
 ## Gameplay
 
