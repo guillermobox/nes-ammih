@@ -27,13 +27,15 @@ ammih.nes: cc65 $(ASSETS) $(SOURCES)
 	cc65/bin/ca65 --debug-info src/ammih.s --include-dir .
 	cc65/bin/ld65 --dbgfile ammih.dbg --config cc65/cfg/nes.cfg src/ammih.o -o ammih.nes
 
+export PYTHONPATH := $(CURDIR)/assets
+
 $(ASSETS): venv
 
 assets/chr.s assets/chr.bin: assets/chr.yaml assets/*.png
-	$(PYTHON) -m asset_compiler.chr $<
+	$(PYTHON) -m compiler.chr $<
 
 assets/messages.s: assets/messages.yaml
-	$(PYTHON) -m asset_compiler.messages $< > $@
+	$(PYTHON) -m compiler.messages $< > $@
 
 assets/stages.s: assets/stages.yaml
-	$(PYTHON) -m asset_compiler.stages $< > $@
+	$(PYTHON) -m compiler.stages $< > $@

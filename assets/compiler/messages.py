@@ -4,8 +4,8 @@ import struct
 import sys
 import yaml
 
-from asset_compiler.translate import to_ppu
-from asset_compiler.serialize import (
+from .translate import to_ppu
+from .serialize import (
     print_address_table,
     print_data,
     print_symbols,

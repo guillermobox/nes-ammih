@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 import sys
 import yaml
 
-from asset_compiler.serialize import print_address_table, print_data, print_symbols
+from .serialize import print_address_table, print_data, print_symbols
 
 
 @dataclass
