@@ -9,6 +9,7 @@ now and then. It's probably outdated already.
 - Homogeneize the variable and label names
 - Rewrite stage.s, it's quite confusing and unstructured
 - Visualize the distribution of the code, routines, and variables
+- Introduce a general concept of counters for cycle computing
 
 ## Asset compiler
 
