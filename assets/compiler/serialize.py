@@ -1,20 +1,11 @@
 import sys
 
 
-def to_ac65(data, width=8):
-    ret = ""
-    while data:
-        ret += ".byte " + ",".join(f"${x:02X}" for x in data[0:width]) + "\n"
-        data = data[width:]
-    return ret
-
-
 def print_address_table(label, addresses, linewidth=30):
     print(f"{label}:")
     line = []
-    addresses = addresses.copy()
-    while addresses:
-        line.append(addresses.pop(0))
+    for address in addresses:
+        line.append(address)
         if sum(map(len, line)) > linewidth:
             print(f".addr {','.join(line)}")
             line = []
@@ -23,8 +14,12 @@ def print_address_table(label, addresses, linewidth=30):
     print()
 
 
-def print_data(label, data):
-    print(f"{label}:\n{to_ac65(data)}")
+def print_data(label, data, width=8):
+    print(f"{label}:")
+    while data:
+        print(".byte " + ",".join(f"${x:02X}" for x in data[0:width]))
+        data = data[width:]
+    print()
 
 
 def print_symbols(symbols, file=sys.stdout):
