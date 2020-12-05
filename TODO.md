@@ -10,6 +10,7 @@ now and then. It's probably outdated already.
 - Rewrite stage.s, it's quite confusing and unstructured
 - Visualize the distribution of the code, routines, and variables
 - Introduce a general concept of counters for cycle computing
+- Explore using objects instead of a monolithic application
 
 ## Asset compiler
 
@@ -24,6 +25,9 @@ now and then. It's probably outdated already.
 
 - Select the stage with a menu
 - Add a battery collectible that provides energy
+- Add a slow tile that consumes two steps to go into
+- Add a box that you can push around
+- Add an enemy that moves in a pattern
 - Introduce an usage for A and B buttons:
     - Allow to "freeze" one robot for one step by pressing A or B
 
