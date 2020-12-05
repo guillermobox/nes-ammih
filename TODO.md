@@ -22,6 +22,7 @@ now and then. It's probably outdated already.
 
 ## Gameplay
 
+- Select the stage with a menu
 - Add a battery collectible that provides energy
 - Introduce an usage for A and B buttons:
     - Allow to "freeze" one robot for one step by pressing A or B
@@ -30,21 +31,22 @@ now and then. It's probably outdated already.
 
 - Add basic sound effects
 - Make sound effects have priority over music
-
-The audio engine is designed around famistudio:
-
-- Support famistudio (still not clear what to support)
-    - Support volume envelopes
-
 - Add some gameplay music
 - Add failure jingle
 - Add success jingle
+- Support famistudio (still not clear what to support)
+  - Support all 4 channels
+  - Support songs with several patterns
+  - Support volume envelopes
+  - Support tremolo
+
 
 ## Graphics
 
 - Change PPU rendering to not need the PPU_ENCODED_LEN
 - Introduce basic animations for the characters
 - Add a title screen
+- Populate the area around the playing cells
 
 ## Text
 
