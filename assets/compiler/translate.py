@@ -17,16 +17,21 @@ def from_ppu(addr):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cell", type=lambda x: map(int, x.split(",")))
+    parser.add_argument("--cell", type=lambda x: tuple(map(int, x.split(","))))
     parser.add_argument("--ppu", type=lambda x: int(x, 0))
     args = parser.parse_args()
 
     if args.cell:
+        cell = args.cell
         ppu = to_ppu(*args.cell)
-        print(f"The ppu coordinates are: 0x{ppu:04X}")
-    if args.ppu:
-        row, col = from_ppu(args.ppu)
-        print(f"The cell coordinates are: {row},{col}")
+    elif args.ppu:
+        ppu = args.ppu
+        cell = from_ppu(args.ppu)
+    else:
+        parser.print_help()
+        return
+
+    print(f"; the cell {cell[0]},{cell[1]} has PPU coordinates 0x{ppu:04X}")
 
 
 if __name__ == "__main__":
