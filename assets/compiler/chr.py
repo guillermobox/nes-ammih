@@ -11,6 +11,18 @@ with open(Path(__file__).parent / "mesen.pal", "rb") as fh:
     MESEN_PALETTE = list(struct.iter_unpack("BBB", fh.read()))
 
 
+def mesen_palette_match(color):
+    c = (color[0], color[1], color[2])
+
+    def dist(a, b):
+        return sum(abs(a[i] - b[i]) for i in range(3))
+
+    closest = sorted(MESEN_PALETTE, key=lambda col: dist(col, c))[0]
+
+    exact = closest == c
+    return exact, MESEN_PALETTE.index(closest)
+
+
 class SolidTile:
     def __init__(self, value):
         self.value = value
@@ -29,7 +41,7 @@ class SolidTile:
 
 class Tile:
     def __init__(self, data, palette):
-        self.data = [palette.index(data[i, j]) for i in range(8) for j in range(8)]
+        self.data = [palette[data[i, j]] for i in range(8) for j in range(8)]
 
     def encode(self):
         """ Encode the tile to chr format """
@@ -46,11 +58,10 @@ class Tile:
 
 
 class Tileset:
-    def __init__(self, name, tiles, palette=None, column=False):
+    def __init__(self, name, tiles, column=False):
         self.name = name
         self.tiles = tiles
         self.column = column
-        self.palette = palette
 
     def encode(self):
         if self.column:
@@ -59,40 +70,6 @@ class Tileset:
             return b"".join(tile.encode() for tile in tiles)
         else:
             return b"".join(tile.encode() for tile in self.tiles)
-
-    @classmethod
-    def guess_palette(cls, colors, section):
-        transparent = (0, 0, 0, 0)
-        colors = sorted([color for freq, color in colors if color != (0, 0, 0, 0)])
-
-        guess = [transparent]
-
-        fixed_colors = False
-        for i in range(1, 4):
-            if f"color{i}" in section:
-                fixed_colors = True
-
-        if fixed_colors == True:
-            for i in range(1, 4):
-                if f"color{i}" not in section:
-                    guess.append(transparent)
-                    continue
-                palindex = section[f"color{i}"]
-                if palindex.startswith("$"):
-                    idx = int(palindex[1:], 16)
-                elif palindex.startswith("#"):
-                    r = int(palindex[1:3], 16)
-                    g = int(palindex[3:5], 16)
-                    b = int(palindex[5:7], 16)
-                    guess.append((r, g, b, 255))
-                    continue
-                else:
-                    idx = int(palindex)
-                pal = MESEN_PALETTE[idx]
-                guess.append((*pal, 255))
-        else:
-            guess.extend(colors)
-        return guess
 
     @classmethod
     def from_section(cls, section, workdir):
@@ -114,21 +91,31 @@ class Tileset:
         colors = img.getcolors()
         if len(colors) > 4:
             raise Exception(f"{path} has too many colors")
-        p = Tileset.guess_palette(colors, section)
 
-        suggested = []
+        def color_to_string(color):
+            if color[3] == 0:
+                return "transparent"
+            else:
+                exact, index = mesen_palette_match(color)
+                return f"#{color[0]:02X}{color[1]:02X}{color[2]:02X} (palette {index:02X} {'exact' if exact else 'similar'})"
 
-        for color in p[1:]:
-            c = (color[0], color[1], color[2])
+        palette = dict()
 
-            def dist(a, b):
-                return sum(abs(a[i] - b[i]) for i in range(3))
+        for count, color in colors:
+            if color[3] == 255:
+                asint = (color[0] << 16) + (color[1] << 8) + color[2]
+            else:
+                asint = None
 
-            suggested.append(
-                MESEN_PALETTE.index(
-                    sorted(MESEN_PALETTE, key=lambda col: dist(col, c))[0]
+            if asint is None:
+                palette[color] = 0
+            elif asint in section["colors"]:
+                palette[color] = section["colors"][asint]
+            else:
+                print(section["file"], "has this:", section["colors"])
+                print(
+                    "I don't know this color! {count:3} pixels of color {color_to_string(color)}"
                 )
-            )
 
         rows = img.height // 8
         cols = img.width // 8
@@ -138,12 +125,13 @@ class Tileset:
             for col in range(cols):
                 box = (col * 8, row * 8, (col + 1) * 8, (row + 1) * 8)
                 tile = img.crop(box)
-                tiles.append(Tile(tile.load(), p))
+                if len(tile.getcolors()) == 1:
+                    continue
+                tiles.append(Tile(tile.load(), palette))
 
         return cls(
             path.name.rstrip(path.suffix),
             tiles,
-            palette=suggested,
             column=section.get("order", "row") == "column",
         )
 

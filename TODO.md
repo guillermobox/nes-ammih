@@ -48,7 +48,6 @@ now and then. It's probably outdated already.
 ## Graphics
 
 - Change PPU rendering to not need the PPU_ENCODED_LEN
-- Make color to palette matching deterministic
 - Introduce basic animations for the characters
 - Add a title screen
 - Populate the area around the playing cells

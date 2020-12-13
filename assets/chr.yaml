@@ -1,11 +1,36 @@
 - file: font.png
-  color3: "#fffeff"
+  colors:
+    0xfffeff: 3
 - file: SOLID
 - file: robot.png
+  colors:
+    0xfe6ecc: 3
+    0xb71e7b: 2
+    0x000000: 1
   order: column
 - file: terminal.png
-- file: ground.png
+  colors:
+    0x388700: 1
+    0xfffeff: 3
+    0x5ce430: 2
 - file: box.png
+  colors:
+    0x155fd9: 1
+    0x64b0ff: 2
 - file: deadlyground.png
+  colors:
+    0x155fd9: 1
+    0x64b0ff: 2
 - file: batteryfull.png
+  colors:
+    0x008f32: 1
+    0x88d800: 2
 - file: floor.png
+  colors:
+    0xb5ebf2: 1
+    0xb8b8b8: 2
+- file: screen_with_robot.png
+  colors:
+    0x000000: 0
+    0xfffeff: 1
+  display: screen
