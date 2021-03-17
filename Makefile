@@ -14,6 +14,7 @@ tools: cc65 venv
 
 cc65:
 	git clone https://github.com/cc65/cc65.git
+	cd cc65 && git checkout V2.19
 	cd cc65/src && make ../bin/ca65 ../bin/ld65
 
 venv:

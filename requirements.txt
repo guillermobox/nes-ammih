@@ -1,2 +1,2 @@
-Pillow
-PyYAML --no-binary=PyYAML
+Pillow==8.1.2
+PyYAML==5.4.1
