@@ -52,6 +52,7 @@ now and then. It's probably outdated already.
 - Add a title screen
 - Populate the area around the playing cells
 - Create an asset tiler for big images
+- Refactor the chr compiler
 
 ## Text
 
