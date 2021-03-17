@@ -45,8 +45,6 @@ class Tile:
 
     def encode(self):
         """ Encode the tile to chr format """
-        if not any(self.data):
-            return b""
         ans = bytearray(0x10)
         for i in range(8):
             for j in range(8):
@@ -121,12 +119,24 @@ class Tileset:
         cols = img.width // 8
 
         tiles = []
+        tiles_data = {}
         for row in range(rows):
             for col in range(cols):
                 box = (col * 8, row * 8, (col + 1) * 8, (row + 1) * 8)
                 tile = img.crop(box)
-                if len(tile.getcolors()) == 1:
-                    continue
+                tiles_data[(row, col)] = tile
+                tiles.append(Tile(tile.load(), palette))
+
+        if section.get("display") == "screen":
+            unique = []
+            for coords in tiles_data.keys():
+                tile = tiles_data[coords]
+                if tile not in unique:
+                    unique.append(tile)
+                tiles_data[coords] = unique.index(tile)
+
+            tiles = []
+            for tile in unique:
                 tiles.append(Tile(tile.load(), palette))
 
         return cls(
