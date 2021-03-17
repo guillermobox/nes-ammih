@@ -5,11 +5,7 @@ import sys
 import yaml
 
 from .translate import to_ppu
-from .serialize import (
-    print_address_table,
-    print_data,
-    print_symbols,
-)
+from .serialize import print_address_table, print_data, print_symbols
 
 
 def encode_char(ch):

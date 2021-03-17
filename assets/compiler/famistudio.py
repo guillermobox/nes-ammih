@@ -76,9 +76,10 @@ class FamiStudioParser:
         name = re.match(FamiStudioParser.name_regexp, line)
         line = line[name.span("name")[1] :]
         matches = re.finditer(FamiStudioParser.attribute_regexp, line)
-        return name["name"].lower(), {
-            m["attribute"].lower(): m["value"] for m in matches
-        }
+        return (
+            name["name"].lower(),
+            {m["attribute"].lower(): m["value"] for m in matches},
+        )
 
     def parse(self, filename):
         for line in open(filename, "r"):
