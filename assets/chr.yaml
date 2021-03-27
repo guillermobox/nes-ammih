@@ -1,7 +1,11 @@
 - file: font.png
   colors:
     0xfffeff: 3
-- file: SOLID
+- file: solid.png
+  colors:
+    0x000000: 1
+    0x4F4F4F: 2
+    0xFFFEFF: 3
 - file: robot.png
   colors:
     0xfe6ecc: 3
@@ -29,8 +33,8 @@
   colors:
     0xb5ebf2: 1
     0xb8b8b8: 2
-- file: screen_with_robot.png
-  colors:
-    0x000000: 0
-    0xfffeff: 1
-  display: screen
+#- file: screen_with_robot.png
+#  colors:
+#    0x000000: 0
+#    0xfffeff: 1
+#  display: screen
