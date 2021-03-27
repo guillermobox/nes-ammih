@@ -29,10 +29,6 @@
   colors:
     0x008f32: 1
     0x88d800: 2
-- file: floor.png
-  colors:
-    0xb5ebf2: 1
-    0xb8b8b8: 2
 #- file: screen_with_robot.png
 #  colors:
 #    0x000000: 0
