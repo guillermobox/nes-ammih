@@ -2,19 +2,17 @@ from pathlib import Path
 import sys
 import yaml
 
-from PIL import Image
-
 from .serialize import print_symbols
 from .image import image_as_tiles
 
 def encode_8x8_img(img, palette):
-    """ Encode a 8x8 pixel image using an specific palette"""
-    data = [palette[img[i, j]] for i in range(8) for j in range(8)]
+    """ Encode a 8x8 pixel image using an specific palette """
     ans = bytearray(0x10)
     for i in range(8):
         for j in range(8):
-            left = data[i + 8 * j] & 0x01
-            right = data[i + 8 * j] >> 1
+            pixel = palette[img[j,i]]
+            left = pixel & 0x01
+            right = pixel >> 1
             ans[i] = (ans[i] << 1) + left
             ans[i + 8] = (ans[i + 8] << 1) + right
     return ans
@@ -28,8 +26,7 @@ def main():
 
     symbols = {}
     for section in cfg:
-        workdir = Path(sys.argv[1]).parent
-        path = workdir / section["file"]
+        path = Path(sys.argv[1]).parent / section["file"]
 
         tiles, palette = image_as_tiles(path, section.get('colors', {}))
         name = "METATILE_" + path.name.rstrip(path.suffix).upper()
