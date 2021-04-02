@@ -37,8 +37,10 @@ def extract_color_palette(img, colormap):
             return "transparent"
         else:
             exact, index = mesen_palette_match(color)
-            return (f"0x{color[0]:02X}{color[1]:02X}{color[2]:02X}"
-                    f"(palette {index:02X} {'exact' if exact else 'similar'})")
+            return (
+                f"0x{color[0]:02X}{color[1]:02X}{color[2]:02X}"
+                f"(palette {index:02X} {'exact' if exact else 'similar'})"
+            )
 
     colors = img.getcolors()
     if len(colors) > 4:
