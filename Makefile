@@ -1,4 +1,5 @@
 SOURCES := $(wildcard src/*.s)
+ASSET_COMPILER := $(wildcard assets/compiler/*.py)
 ASSETS := $(addprefix assets/,chr.bin stages.s chr.s messages.s stages.s)
 
 export PYTHONPATH := $(CURDIR)/assets
@@ -20,10 +21,14 @@ cc65:
 venv:
 	python3 -m venv venv
 	venv/bin/pip install -r requirements.txt
+	touch venv
 
 clean:
 	rm -f ammih.nes ammih.dbg src/ammih.o
 	rm -f $(ASSETS)
+	find . -type f -name *.pyc -delete
+	find . -type d -name __pycache__ -delete
+
 
 purge: clean
 	rm -rf venv cc65
